@@ -3,6 +3,7 @@ import pickle
 from market.market import Market
 from util.generator import Generator
 from stock.stock import Stock
+import pandas as pd
 
 asklist = []
 openasklist = open("asklist.pickle", "wb")
@@ -98,7 +99,7 @@ class Buylow:
                         <orderType>BUY_WRITES</orderType>
                     </PreviewOrderRequest>"""
                             
-                
+
                 market.stop_loss()
                 orderaction1 = "BUY"
                 orderaction2 = "SELL_OPEN"
@@ -108,11 +109,16 @@ class Buylow:
                     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                         account_value -= 100 * Stock.getLimitPrice(data.iloc[i])
                         expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
+                        print(Stock.getStrikePrice(data.iloc[i]))                   
                         payload = payload.format(clientorderId, Stock.getSymbol(data.iloc[i]), expiry_date[2], expiry_date[1], expiry_date[0], Stock.getStrikePrice(data.iloc[i]), round((Stock.getLimitPrice(data.iloc[i])), 2), orderaction1, orderaction2) #, ask, orderaction)
+                        print(payload)
                         market.preview_order(payload, clientorderId, Stock.getSymbol(data.iloc[i]), expiry_date[2], expiry_date[1], expiry_date[0], Stock.getStrikePrice(data.iloc[i]), round((Stock.getLimitPrice(data.iloc[i])), 2), orderaction1, orderaction2)
                 market.cash_in_early()
             loop.call_soon(buy)
-        loop.call_later(3, createbuyorder)#300, createbuyorder)
+        loop.call_later(3, createbuyorder)    
+            
+
+            
 
 
         def renew_token():
@@ -126,3 +132,6 @@ class Buylow:
         loop.call_later(5,createbuyorder)#7200, createbuyorder)
         loop.call_later(7100, renew_token)
         loop.run_forever()
+
+        #8201c4ae9815589e35c2b474c19e863d
+        #02969e4763bc75a8e74d9f9b39e528b82e320a5e5fde9cacdfbedb5ee12700a4
