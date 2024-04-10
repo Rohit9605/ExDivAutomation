@@ -71,7 +71,8 @@ class Accounts:
                     print(str(count) + ")\t" "Go Back")
 
                     # Select account option
-                    account_index = input("Please select an account: ")
+                    #account_index = input("Please select an account: ")
+                    account_index = "1"
                     if account_index.isdigit() and 0 < int(account_index) < count:
                         if self.base_url == "":
                             self.account = accounts[int(account_index) - 1]

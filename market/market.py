@@ -2,6 +2,8 @@ import configparser
 import json
 import logging
 from logging.handlers import RotatingFileHandler
+from util.generator import Generator
+import datetime as dt
 
 # logger settings
 logger = logging.getLogger('my_logger')
@@ -29,10 +31,10 @@ class Market:
 
         :param self: Passes authenticated session in parameter
         """
-        symbols = ""
+        symbol = "DIS"
 
         # URL for the API endpoint
-        url = self.base_url + "/v1/market/quote/" + symbols + ".json"
+        url = self.base_url + "/v1/market/quote/" + symbol + ".json"
 
         # Make API call for GET request
         headers = {"Connection": "close"}
@@ -65,7 +67,51 @@ class Market:
             logger.debug("Response Body: %s", response)
             print("Error: Quote API service error")
 
-    def preview_order(self, req, clientId, limitprice, orderaction):
+    def getPortfolioCashValue(self):
+        
+        """
+        Calls quotes API to provide quote details for equities, options, and mutual funds
+
+        :param self: Passes authenticated session in parameter
+        """
+
+        # URL for the API endpoint
+        url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/portfolio.json"
+
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        payload = {
+            "totalsRequired": True
+        }
+        response = self.session.get(url, headers=headers, params=payload)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            print(data)
+            if data is not None and "PortfolioResponse" in data and "Totals" in data["PortfolioResponse"] and "cashBalance" in data["PortfolioResponse"]["Totals"]:
+                return data["PortfolioResponse"]["Totals"]["cashBalance"]
+            #else:
+                # Handle errors
+                # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
+                #         and 'Message' in data["PortfolioResponse"]["Messages"] \
+                #         and data["PortfolioResponse"]["Messages"]["Message"] is not None:
+                #     for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                #         print("Error: " + error_message["description"])
+                # else:
+                #     print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+
+    
+    def preview_order(self, req, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
 
         """
         Call preview order API based on selecting from different given options
@@ -93,7 +139,7 @@ class Market:
             if data is not None and "PreviewOrderResponse" in data and "PreviewIds" in data["PreviewOrderResponse"]:
                 for previewids in data["PreviewOrderResponse"]["PreviewIds"]:
                     print(previewids["previewId"])
-                    self.place_order(clientId, previewids["previewId"], limitprice, orderaction)
+                    self.place_order(clientId, symbol, day, month, year, strikeprice, previewids["previewId"], limitprice, orderaction1, orderaction2)
             else:
                 # Handle errors
                 data = response.json()
@@ -144,7 +190,7 @@ class Market:
             else:
                 print("Error: Preview Order API service error")
 
-    def place_order(self, clientId, previewIds, limitprice, orderaction):
+    def place_order(self, clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2):
 
         url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/orders/place.json"
 
@@ -153,33 +199,50 @@ class Market:
 
         # Add payload for POST Request
         payload = """<PlaceOrderRequest>
-                       <orderType>EQ</orderType>
-                       <clientOrderId>{0}</clientOrderId>
-                       <Order>
-                           <allOrNone>false</allOrNone>
-                           <priceType>LIMIT</priceType>
-                           <orderTerm>GOOD_FOR_DAY</orderTerm>
-                           <marketSession>REGULAR</marketSession>
-                           <stopPrice></stopPrice>
-                           <limitPrice>{1}</limitPrice>
-                           <Instrument>
-                               <Product>
-                                   <securityType>EQ</securityType>
-                                   <symbol></symbol>
-                               </Product>
-                               <orderAction>{3}</orderAction>
-                               <quantityType>QUANTITY</quantityType>
-                               <quantity>1</quantity>
-                           </Instrument>
-                       </Order>
-                       <PreviewIds>
-                        <previewId>{2}</previewId>
-                       </PreviewIds>
-                   </PlaceOrderRequest>"""
-        payload = payload.format(clientId, limitprice, previewIds, orderaction)
+                                <Order>
+                                    <Instrument>
+                                        <Product>
+                                        <securityType>EQ</securityType>
+                                        <symbol>{1}</symbol>
+                                        </Product>
+                                        <orderAction>{8}</orderAction>
+                                        <quantityType>QUANTITY</quantityType>
+                                        <quantity>100</quantity>
+                                    </Instrument>
+                                    <Instrument>
+                                        <Product>
+                                        <callPut>CALL</callPut>
+                                        <expiryDay>{2}</expiryDay>
+                                        <expiryMonth>{3}</expiryMonth>
+                                        <expiryYear>{4}</expiryYear>
+                                        <securityType>OPTN</securityType>
+                                        <strikePrice>{5}</strikePrice>
+                                        <symbol>{1}</symbol>
+                                        </Product>
+                                        <orderAction>{9}</orderAction>
+                                        <orderedQuantity>1</orderedQuantity>
+                                        <quantity>1</quantity>
+                                    </Instrument>
+                                    <allOrNone>FALSE</allOrNone>
+                                    <limitPrice>{7}</limitPrice>
+                                    <marketSession>REGULAR</marketSession>
+                                    <orderTerm>GOOD_FOR_DAY</orderTerm>
+                                    <priceType>NET_DEBIT</priceType>
+                                </Order>
+                                <clientOrderId>{0}</clientOrderId>
+                                <orderType>BUY_WRITES</orderType>
+                                <PreviewIds>
+                                    <previewId>{6}</previewId>
+                                </PreviewIds>
+                            </PlaceOrderRequest>"""
+        
+        payload = payload.format(clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2)#orderaction
+        #payload = payload.format(clientId, limitprice, previewIds, orderaction)
         response = self.session.post(url, header_auth=True, headers=headers, data=payload)
         logger.debug("Request Header: %s", response.request.headers)
         logger.debug("Request payload: %s", payload)
+        print(payload)
+        print(response)
 
         if response is not None and response.status_code == 200:
             parsed = json.loads(response.text)
@@ -191,4 +254,205 @@ class Market:
                 print("Error: " + data["Error"]["message"])
             else:
                 print("Error: Place Order API service error")
+    
+    def stop_loss(self):
+        """
+        Calls quotes API to provide quote details for equities, options, and mutual funds
 
+        :param self: Passes authenticated session in parameter
+        """
+
+        # URL for the API endpoint
+        url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/portfolio.json"
+
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        payload = {
+            "totalsRequired": True
+        }
+        response = self.session.get(url, headers=headers, params=payload)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            print(data)
+            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
+            and "position" in data["PortfolioResponse"]["AccountPortfolio"]):
+                #looping through the positions
+                for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:
+                    
+                    marketPrice = position["marketValue"]
+                    strikePrice = position["Product"]["strikePrice"]
+                    symbol = position["symbolDescription"]
+                    expiryYear = position["Product"]["expiryYear"]
+                    expiryMonth = position["Product"]["expiryMonth"]
+                    expiryDay = position["Product"]["expiryDay"]
+                    limitPrice = strikePrice
+
+                    payload = """<PreviewOrderRequest>
+                            <Order>
+                                <Instrument>
+                                    <Product>
+                                    <securityType>EQ</securityType>
+                                    <symbol>{1}</symbol>
+                                    </Product>
+                                    <orderAction>{7}</orderAction>
+                                    <quantityType>QUANTITY</quantityType>
+                                    <quantity>100</quantity>
+                                </Instrument>
+                                <Instrument>
+                                    <Product>
+                                    <callPut>CALL</callPut>
+                                    <expiryDay>{2}</expiryDay>
+                                    <expiryMonth>{3}</expiryMonth>
+                                    <expiryYear>{4}</expiryYear>
+                                    <securityType>OPTN</securityType>
+                                    <strikePrice>{5}</strikePrice>
+                                    <symbol>{1}</symbol>
+                                    </Product>
+                                    <orderAction>{8}</orderAction>
+                                    <orderedQuantity>1</orderedQuantity>
+                                    <quantity>1</quantity>
+                                </Instrument>
+                                <allOrNone>FALSE</allOrNone>
+                                <limitPrice>{6}</limitPrice>
+                                <marketSession>REGULAR</marketSession>
+                                <orderTerm>GOOD_FOR_DAY</orderTerm>
+                                <priceType>NET_DEBIT</priceType>
+                            </Order>
+                            <clientOrderId>{0}</clientOrderId>
+                            <orderType>BUY_WRITES</orderType>
+                        </PreviewOrderRequest>"""
+                    
+                orderaction1 = 'SELL'
+                orderaction2 = 'BUY_CLOSE'
+                if(marketPrice <= strikePrice):
+                    clientorderId = Generator.get_random_alphanumeric_string(20)
+                    payload = payload.format(clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2) #, ask, orderaction)
+                    self.preview_order(payload, clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2)       
+                    
+            #else:
+                # Handle errors
+                # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
+                #         and 'Message' in data["PortfolioResponse"]["Messages"] \
+                #         and data["PortfolioResponse"]["Messages"]["Message"] is not None:
+                #     for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                #         print("Error: " + error_message["description"])
+                # else:
+                #     print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+    
+    def cash_in_early(self):
+        """
+        Calls quotes API to provide quote details for equities, options, and mutual funds
+
+        :param self: Passes authenticated session in parameter
+        """
+
+        # URL for the API endpoint
+        url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/portfolio.json"
+
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        payload = {
+            "totalsRequired": True
+        }
+        response = self.session.get(url, headers=headers, params=payload)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            print(data)
+            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
+            and "position" in data["PortfolioResponse"]["AccountPortfolio"]):
+                #looping through the positions
+                #for i in range(len(data["PortfolioResponse"]["AccountPortfolio"]["Position"])):
+                for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:
+                    
+                    #used to calculate the expectedPctReturn
+                    askPrice =         position["CompleteView"]["ask"]
+                    bidPrice =         position["CompleteView"]["bid"]
+                    expiryYear =       position["Product"]["expiryYear"]
+                    expiryMonth =      position["Product"]["expiryMonth"]
+                    expiryDay =        position["Product"]["expiryDay"]
+                    markPrice = (askPrice + bidPrice)/2
+                    strikePrice =      position["Product"]["strikePrice"]
+                    symbol =           position["symbolDescription"]
+                    limitPrice = markPrice
+                    daysToExpiration = position["OptionsWatchView"]["expiryDay"]                   
+                    pricePaid =        position["pricePaid"]                   
+                    qdiv =             data["PortfolioResponse"]["AccountPortfolio"]["CompleteView"]["Dividend"]/4
+                    
+                    #used to check if buy_write should be sold
+                    pctChange = data["PortfolioResponse"]["AccountPortfolio"]["Position"]["changePct"]
+                    expectedPctReturn = (strikePrice - pricePaid + qdiv)/(daysToExpiration) * 100 * 365
+
+                    payload = """<PreviewOrderRequest>
+                            <Order>
+                                <Instrument>
+                                    <Product>
+                                    <securityType>EQ</securityType>
+                                    <symbol>{1}</symbol>
+                                    </Product>
+                                    <orderAction>{7}</orderAction>
+                                    <quantityType>QUANTITY</quantityType>
+                                    <quantity>100</quantity>
+                                </Instrument>
+                                <Instrument>
+                                    <Product>
+                                    <callPut>CALL</callPut>
+                                    <expiryDay>{2}</expiryDay>
+                                    <expiryMonth>{3}</expiryMonth>
+                                    <expiryYear>{4}</expiryYear>
+                                    <securityType>OPTN</securityType>
+                                    <strikePrice>{5}</strikePrice>
+                                    <symbol>{1}</symbol>
+                                    </Product>
+                                    <orderAction>{8}</orderAction>
+                                    <orderedQuantity>1</orderedQuantity>
+                                    <quantity>1</quantity>
+                                </Instrument>
+                                <allOrNone>FALSE</allOrNone>
+                                <limitPrice>{6}</limitPrice>
+                                <marketSession>REGULAR</marketSession>
+                                <orderTerm>GOOD_FOR_DAY</orderTerm>
+                                <priceType>NET_DEBIT</priceType>
+                            </Order>
+                            <clientOrderId>{0}</clientOrderId>
+                            <orderType>BUY_WRITES</orderType>
+                        </PreviewOrderRequest>"""
+                    
+                orderaction1 = 'SELL'
+                orderaction2 = 'BUY_CLOSE'
+                if(pctChange > expectedPctReturn):
+                    clientorderId = Generator.get_random_alphanumeric_string(20)
+                    payload = payload.format(clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2) #, ask, orderaction)
+                    self.preview_order(payload, clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2)       
+                    
+            #else:
+                # Handle errors
+                # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
+                #         and 'Message' in data["PortfolioResponse"]["Messages"] \
+                #         and data["PortfolioResponse"]["Messages"]["Message"] is not None:
+                #     for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                #         print("Error: " + error_message["description"])
+                # else:
+                #     print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+        

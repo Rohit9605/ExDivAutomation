@@ -5,6 +5,9 @@ import configparser
 from rauth import OAuth1Service
 from logging.handlers import RotatingFileHandler
 from accounts.accounts import Accounts
+import pandas as pd
+import pyotp
+import robin_stocks as robin
 
 # loading configuration file
 config = configparser.ConfigParser()
@@ -15,12 +18,11 @@ logger = logging.getLogger('my_logger')
 logger.setLevel(logging.DEBUG)
 handler = RotatingFileHandler("python_client.log", maxBytes=5 * 1024 * 1024, backupCount=3)
 FORMAT = "%(asctime)-15s %(message)s"
-fmt = logging.Formatter(FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
+fmt = logging.Formatter(FORMAT, datefmt=f'%m/%d/%Y %I:%M:%S %p')
 handler.setFormatter(fmt)
 logger.addHandler(handler)
 
-
-def oauth():
+def oauth_etrade():
     """Allows user authorization for the sample application with OAuth 1"""
     etrade = OAuth1Service(
         name="etrade",
@@ -45,12 +47,21 @@ def oauth():
     session = etrade.get_auth_session(request_token,
                                       request_token_secret,
                                       params={"oauth_verifier": text_code})
-
+    print(session)
     base_url = "https://api.etrade.com"
     accounts = Accounts(session, base_url)
     accounts.account_list()
 
+def oauth_robinhood():
+    KEY = '4P2T7GUU6H2YMVBT'
+    EMAIL = 'rohitgundam@gmail.com'
+    PASSWD = 'Hood123$$??'
+    totp = pyotp.TOTP(KEY).now()
+    CODE = totp
+    login = robin.robinhood.authentication.login(EMAIL,PASSWD, mfa_code=CODE)
 
 if __name__ == "__main__":
-    oauth()
+    oauth_robinhood()
+    oauth_etrade()
+
 
