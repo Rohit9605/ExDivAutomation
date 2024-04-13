@@ -63,13 +63,14 @@ class Buylow:
             # ask = market.quotes()
             # if ask <= movingaverage:
             def buy():
+                clientorderId = Generator.get_random_alphanumeric_string(20)
                 account_value = market.getPortfolioCashValue()
                 # payload = """<PreviewOrderRequest>
                 #         <Order>
                 #             <Instrument>
                 #                 <Product>
                 #                 <securityType>EQ</securityType>
-                #                 <symbol>HRL</symbol>
+                #                 <symbol>UAL</symbol>
                 #                 </Product>
                 #                 <orderAction>{2}</orderAction>
                 #                 <quantityType>QUANTITY</quantityType>
@@ -79,11 +80,11 @@ class Buylow:
                 #                 <Product>
                 #                 <callPut>CALL</callPut>
                 #                 <expiryDay>19</expiryDay>
-                #                 <expiryMonth>4</expiryMonth>
+                #                 <expiryMonth>04</expiryMonth>
                 #                 <expiryYear>2024</expiryYear>
                 #                 <securityType>OPTN</securityType>
-                #                 <strikePrice>33</strikePrice>
-                #                 <symbol>HRL</symbol>
+                #                 <strikePrice>39</strikePrice>
+                #                 <symbol>UAL</symbol>
                 #                 </Product>
                 #                 <orderAction>SELL_OPEN</orderAction>
                 #                 <orderedQuantity>1</orderedQuantity>
@@ -98,40 +99,40 @@ class Buylow:
                 #         <clientOrderId>{0}</clientOrderId>
                 #         <orderType>BUY_WRITES</orderType>
                 #     </PreviewOrderRequest>"""
-                payload = """<PreviewOrderRequest>
-                                <Order>
-                                    <Instrument>
-                                        <Product>
-                                        <securityType>EQ</securityType>
-                                        <symbol>DIS</symbol>
-                                        </Product>
-                                        <orderAction>{2}</orderAction>
-                                        <quantityType>QUANTITY</quantityType>
-                                        <quantity>100</quantity>
-                                    </Instrument>
-                                    <Instrument>
-                                        <Product>
-                                        <callPut>CALL</callPut>
-                                        <expiryDay>19</expiryDay>
-                                        <expiryMonth>4</expiryMonth>
-                                        <expiryYear>2024</expiryYear>
-                                        <securityType>OPTN</securityType>
-                                        <strikePrice>45</strikePrice>
-                                        <symbol>DIS</symbol>
-                                        </Product>
-                                        <orderAction>SELL_OPEN</orderAction>
-                                        <orderedQuantity>1</orderedQuantity>
-                                        <quantity>1</quantity>
-                                    </Instrument>
-                                    <allOrNone>FALSE</allOrNone>
-                                    <limitPrice>{1}/limitPrice>
-                                    <marketSession>REGULAR</marketSession>
-                                    <orderTerm>GOOD_FOR_DAY</orderTerm>
-                                    <priceType>NET_DEBIT</priceType>
-                                </Order>
-                                <clientOrderId>{0}</clientOrderId>
-                                <orderType>BUY_WRITES</orderType>
-                            </PreviewOrderRequest>"""
+                # payload = """<PreviewOrderRequest>
+                #                 <Order>
+                #                     <Instrument>
+                #                         <Product>
+                #                         <securityType>EQ</securityType>
+                #                         <symbol>DIS</symbol>
+                #                         </Product>
+                #                         <orderAction>BUY</orderAction>
+                #                         <quantityType>QUANTITY</quantityType>
+                #                         <quantity>100</quantity>
+                #                     </Instrument>
+                #                     <Instrument>
+                #                         <Product>
+                #                         <callPut>CALL</callPut>
+                #                         <expiryDay>19</expiryDay>
+                #                         <expiryMonth>04</expiryMonth>
+                #                         <expiryYear>2024</expiryYear>
+                #                         <securityType>OPTN</securityType>
+                #                         <strikePrice>110</strikePrice>
+                #                         <symbol>DIS</symbol>
+                #                         </Product>
+                #                         <orderAction>SELL_OPEN</orderAction>
+                #                         <orderedQuantity>1</orderedQuantity>
+                #                         <quantity>1</quantity>
+                #                     </Instrument>
+                #                     <allOrNone>FALSE</allOrNone>
+                #                     <limitPrice>35/limitPrice>
+                #                     <marketSession>REGULAR</marketSession>
+                #                     <orderTerm>GOOD_FOR_DAY</orderTerm>
+                #                     <priceType>NET_DEBIT</priceType>
+                #                 </Order>
+                #                 <clientOrderId>{0}</clientOrderId>
+                #                 <orderType>BUY_WRITES</orderType>
+                #             </PreviewOrderRequest>"""
 
                 #   payload = """<PreviewOrderRequest>
                 #                 <orderType>EQ</orderType>
@@ -153,7 +154,41 @@ class Buylow:
                 #                         <quantity>1</quantity>
                 #                     </Instrument>
                 #                 </Order>
-                #             </PreviewOrderRequest>"""            
+                #             </PreviewOrderRequest>"""
+                payload = """<PreviewOrderRequest>
+                        <Order>
+                            <Instrument>
+                                <Product>
+                                <securityType>EQ</securityType>
+                                <symbol>UAL</symbol>
+                                </Product>
+                                <orderAction>{2}</orderAction>
+                                <quantityType>QUANTITY</quantityType>
+                                <quantity>100</quantity>
+                            </Instrument>
+                            <Instrument>
+                                <Product>
+                                <callPut>CALL</callPut>
+                                <expiryDay>19</expiryDay>
+                                <expiryMonth>04</expiryMonth>
+                                <expiryYear>2024</expiryYear>
+                                <securityType>OPTN</securityType>
+                                <strikePrice>39</strikePrice>
+                                <symbol>UAL</symbol>
+                                </Product>
+                                <orderAction>SELL_OPEN</orderAction>
+                                <orderedQuantity>1</orderedQuantity>
+                                <quantity>1</quantity>
+                            </Instrument>
+                            <allOrNone>FALSE</allOrNone>
+                            <limitPrice>{1}</limitPrice>
+                            <marketSession>REGULAR</marketSession>
+                            <orderTerm>GOOD_FOR_DAY</orderTerm>
+                            <priceType>NET_DEBIT</priceType>
+                        </Order>
+                        <clientOrderId>{0}</clientOrderId>
+                        <orderType>BUY_WRITES</orderType>
+                    </PreviewOrderRequest>"""            
 
                 #market.stop_loss()
                 # orderaction1 = "BUY"
@@ -161,10 +196,11 @@ class Buylow:
                 # data = Stock.getDataFrame()
                 # account_value = 100000
                 # for i in range(3):
-                clientorderId = Generator.get_random_alphanumeric_string(20)                
+                clientorderId = Generator.get_random_alphanumeric_string(20)         
                 orderaction = "BUY"
-                payload = payload.format(clientorderId, 35, orderaction)
-                market.preview_order(payload, clientorderId, 35, orderaction)
+                limitprice = 38
+                payload = payload.format(clientorderId, limitprice, orderaction)
+                market.preview_order(payload, clientorderId, limitprice, orderaction)
                 #     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                 #         account_value -= 100 * Stock.getLimitPrice(data.iloc[i])
                 #         expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
