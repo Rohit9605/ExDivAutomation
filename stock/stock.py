@@ -185,12 +185,11 @@ class Stock():
 
     def getDataFrame():
         final = pd.DataFrame()
-        tickers = ['HRL']#'AMT', 'PNC', 'HRL','FCX', 'PNC', 
-        #tickers = si.tickers_dow()
-        #can add Nasdaq and SP600 here
-        #sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
-        #sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
-        #tickers.extend(sp500['Symbol'].unique().tolist())   
+        tickers = ['CL']#'PG', 'EOG'
+        # tickers = si.tickers_dow()
+        # sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
+        # sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
+        # tickers.extend(sp500['Symbol'].unique().tolist())   
         #tickers = (sp500['Symbol'].unique().tolist()) 
         print(tickers)
         #tickers.extend(pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0])

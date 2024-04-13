@@ -111,7 +111,7 @@ class Market:
             print("Error: Quote API service error")
 
     
-    def preview_order(self, req, clientId, limitprice, orderaction):#, limitprice, orderaction):#, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
+    def preview_order(self, req, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):#, limitprice, orderaction):#, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
 
         """
         Call preview order API based on selecting from different given options
@@ -140,7 +140,7 @@ class Market:
                 for previewids in data["PreviewOrderResponse"]["PreviewIds"]:
                     print(previewids["previewId"])
                     #self.place_order(clientId, symbol, day, month, year, strikeprice, previewids["previewId"], limitprice, orderaction1, orderaction2)
-                    self.place_order(clientId, limitprice, previewids["previewId"], orderaction)
+                    self.place_order(clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewids["previewId"])
                     #, limitprice, orderaction
             else:
                 # Handle errors
@@ -192,7 +192,7 @@ class Market:
             else:
                 print("Error: Preview Order API service error")
 
-    def place_order(self, clientId, limitprice, previewIds, orderaction):#symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2):
+    def place_order(self, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewIds):#symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2):
 
         url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/orders/place.json"
 
@@ -282,39 +282,39 @@ class Market:
                             <Instrument>
                                 <Product>
                                 <securityType>EQ</securityType>
-                                <symbol>UAL</symbol>
+                                <symbol>{1}</symbol>
                                 </Product>
-                                <orderAction>{3}</orderAction>
+                                <orderAction>{7}</orderAction>
                                 <quantityType>QUANTITY</quantityType>
                                 <quantity>100</quantity>
                             </Instrument>
                             <Instrument>
                                 <Product>
                                 <callPut>CALL</callPut>
-                                <expiryDay>19</expiryDay>
-                                <expiryMonth>04</expiryMonth>
-                                <expiryYear>2024</expiryYear>
+                                <expiryDay>{2}</expiryDay>
+                                <expiryMonth>{3}</expiryMonth>
+                                <expiryYear>{4}</expiryYear>
                                 <securityType>OPTN</securityType>
-                                <strikePrice>39</strikePrice>
-                                <symbol>UAL</symbol>
+                                <strikePrice>{5}</strikePrice>
+                                <symbol>{1}</symbol>
                                 </Product>
-                                <orderAction>SELL_OPEN</orderAction>
+                                <orderAction>{8}</orderAction>
                                 <orderedQuantity>1</orderedQuantity>
                                 <quantity>1</quantity>
                             </Instrument>
                             <allOrNone>FALSE</allOrNone>
-                            <limitPrice>{2}</limitPrice>
+                            <limitPrice>{6}</limitPrice>
                             <marketSession>REGULAR</marketSession>
                             <orderTerm>GOOD_FOR_DAY</orderTerm>
                             <priceType>NET_DEBIT</priceType>
                         </Order>
                         <PreviewIds>
-                            <previewId>{1}</previewId>
+                            <previewId>{9}</previewId>
                         </PreviewIds>
                         <clientOrderId>{0}</clientOrderId>
                         <orderType>BUY_WRITES</orderType>
                     </PlaceOrderRequest>"""
-        payload = payload.format(clientId, previewIds, limitprice, orderaction)
+        payload = payload.format(clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewIds)
 
         
         #payload = payload.format(clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2)#orderaction
@@ -365,17 +365,17 @@ class Market:
             data = response.json()
             print(data)
             if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
-            and "position" in data["PortfolioResponse"]["AccountPortfolio"]):
+            and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
                 #looping through the positions
                 for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:
-                    
-                    marketPrice = position["marketValue"]
-                    strikePrice = position["Product"]["strikePrice"]
+                    print(position)
+                    marketprice = position["marketValue"]
+                    strikeprice = position["Product"]["strikePrice"]
                     symbol = position["symbolDescription"]
-                    expiryYear = position["Product"]["expiryYear"]
-                    expiryMonth = position["Product"]["expiryMonth"]
-                    expiryDay = position["Product"]["expiryDay"]
-                    limitPrice = strikePrice
+                    year = position["Product"]["expiryYear"]
+                    month = position["Product"]["expiryMonth"]
+                    day = position["Product"]["expiryDay"]
+                    limitprice = strikeprice
 
                     payload = """<PreviewOrderRequest>
                             <Order>
@@ -414,10 +414,10 @@ class Market:
                     
                 orderaction1 = 'SELL'
                 orderaction2 = 'BUY_CLOSE'
-                if(marketPrice <= strikePrice):
+                if(marketprice <= strikeprice):
                     clientorderId = Generator.get_random_alphanumeric_string(20)
-                    payload = payload.format(clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2) #, ask, orderaction)
-                    self.preview_order(payload, clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2)       
+                    payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
+                    self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
                     
             #else:
                 # Handle errors
@@ -460,7 +460,7 @@ class Market:
             data = response.json()
             print(data)
             if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
-            and "position" in data["PortfolioResponse"]["AccountPortfolio"]):
+            and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
                 #looping through the positions
                 #for i in range(len(data["PortfolioResponse"]["AccountPortfolio"]["Position"])):
                 for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:

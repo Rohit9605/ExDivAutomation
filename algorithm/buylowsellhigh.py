@@ -160,28 +160,28 @@ class Buylow:
                             <Instrument>
                                 <Product>
                                 <securityType>EQ</securityType>
-                                <symbol>UAL</symbol>
+                                <symbol>{1}</symbol>
                                 </Product>
-                                <orderAction>{2}</orderAction>
+                                <orderAction>{7}</orderAction>
                                 <quantityType>QUANTITY</quantityType>
                                 <quantity>100</quantity>
                             </Instrument>
                             <Instrument>
                                 <Product>
                                 <callPut>CALL</callPut>
-                                <expiryDay>19</expiryDay>
-                                <expiryMonth>04</expiryMonth>
-                                <expiryYear>2024</expiryYear>
+                                <expiryDay>{2}</expiryDay>
+                                <expiryMonth>{3}</expiryMonth>
+                                <expiryYear>{4}</expiryYear>
                                 <securityType>OPTN</securityType>
-                                <strikePrice>39</strikePrice>
-                                <symbol>UAL</symbol>
+                                <strikePrice>{5}</strikePrice>
+                                <symbol>{1}</symbol>
                                 </Product>
-                                <orderAction>SELL_OPEN</orderAction>
+                                <orderAction>{8}</orderAction>
                                 <orderedQuantity>1</orderedQuantity>
                                 <quantity>1</quantity>
                             </Instrument>
                             <allOrNone>FALSE</allOrNone>
-                            <limitPrice>{1}</limitPrice>
+                            <limitPrice>{6}</limitPrice>
                             <marketSession>REGULAR</marketSession>
                             <orderTerm>GOOD_FOR_DAY</orderTerm>
                             <priceType>NET_DEBIT</priceType>
@@ -193,14 +193,18 @@ class Buylow:
                 #market.stop_loss()
                 # orderaction1 = "BUY"
                 # orderaction2 = "SELL_OPEN"
-                # data = Stock.getDataFrame()
+                data = Stock.getDataFrame()
                 # account_value = 100000
-                # for i in range(3):
-                clientorderId = Generator.get_random_alphanumeric_string(20)         
-                orderaction = "BUY"
-                limitprice = 38
-                payload = payload.format(clientorderId, limitprice, orderaction)
-                market.preview_order(payload, clientorderId, limitprice, orderaction)
+                for i in range(len(data)):
+                    clientorderId = Generator.get_random_alphanumeric_string(20)   
+                    symbol = Stock.getSymbol(data.iloc[i])
+                    expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
+                    strikeprice = Stock.getStrikePrice(data.iloc[i])   
+                    limitprice = Stock.getLimitPrice(data.iloc[i])
+                    orderaction1 = "BUY"
+                    orderaction2 = "SELL_OPEN"    
+                    new_payload = payload.format(clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
+                    market.preview_order(new_payload, clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
                 #     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                 #         account_value -= 100 * Stock.getLimitPrice(data.iloc[i])
                 #         expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
