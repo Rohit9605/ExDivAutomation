@@ -111,7 +111,7 @@ class Market:
             print("Error: Quote API service error")
 
     
-    def preview_order(self, req, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
+    def preview_order(self, req, clientId, limitprice, orderaction):#, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
 
         """
         Call preview order API based on selecting from different given options
@@ -139,7 +139,8 @@ class Market:
             if data is not None and "PreviewOrderResponse" in data and "PreviewIds" in data["PreviewOrderResponse"]:
                 for previewids in data["PreviewOrderResponse"]["PreviewIds"]:
                     print(previewids["previewId"])
-                    self.place_order(clientId, symbol, day, month, year, strikeprice, previewids["previewId"], limitprice, orderaction1, orderaction2)
+                    #self.place_order(clientId, symbol, day, month, year, strikeprice, previewids["previewId"], limitprice, orderaction1, orderaction2)
+                    self.place_order(clientId, previewids["previewId"], limitprice, orderaction)
             else:
                 # Handle errors
                 data = response.json()
@@ -190,7 +191,7 @@ class Market:
             else:
                 print("Error: Preview Order API service error")
 
-    def place_order(self, clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2):
+    def place_order(self, clientId, previewIds, limitprice, orderaction):#symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2):
 
         url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/orders/place.json"
 
@@ -198,45 +199,112 @@ class Market:
         headers = {"Content-Type": "application/xml", "consumerKey": config["DEFAULT"]["CONSUMER_KEY"]}
 
         # Add payload for POST Request
-        payload = """<PlaceOrderRequest>
+        # Add payload for POST Request
+        payload = """<PreviewOrderRequest>
                                 <Order>
                                     <Instrument>
                                         <Product>
                                         <securityType>EQ</securityType>
-                                        <symbol>{1}</symbol>
+                                        <symbol>DIS</symbol>
                                         </Product>
-                                        <orderAction>{8}</orderAction>
+                                        <orderAction>{3}</orderAction>
                                         <quantityType>QUANTITY</quantityType>
                                         <quantity>100</quantity>
                                     </Instrument>
                                     <Instrument>
                                         <Product>
                                         <callPut>CALL</callPut>
-                                        <expiryDay>{2}</expiryDay>
-                                        <expiryMonth>{3}</expiryMonth>
-                                        <expiryYear>{4}</expiryYear>
+                                        <expiryDay>19</expiryDay>
+                                        <expiryMonth>4</expiryMonth>
+                                        <expiryYear>2024</expiryYear>
                                         <securityType>OPTN</securityType>
-                                        <strikePrice>{5}</strikePrice>
-                                        <symbol>{1}</symbol>
+                                        <strikePrice>45</strikePrice>
+                                        <symbol>DIS</symbol>
                                         </Product>
-                                        <orderAction>{9}</orderAction>
+                                        <orderAction>SELL_OPEN</orderAction>
                                         <orderedQuantity>1</orderedQuantity>
                                         <quantity>1</quantity>
                                     </Instrument>
                                     <allOrNone>FALSE</allOrNone>
-                                    <limitPrice>{7}</limitPrice>
+                                    <limitPrice>{1}/limitPrice>
                                     <marketSession>REGULAR</marketSession>
                                     <orderTerm>GOOD_FOR_DAY</orderTerm>
                                     <priceType>NET_DEBIT</priceType>
                                 </Order>
+                                <PreviewIds>
+                                    <previewId>{2}</previewId>
+                                </PreviewIds>                             
                                 <clientOrderId>{0}</clientOrderId>
                                 <orderType>BUY_WRITES</orderType>
-                                <PreviewIds>
-                                    <previewId>{6}</previewId>
-                                </PreviewIds>
-                            </PlaceOrderRequest>"""
+                            </PreviewOrderRequest>"""
+#{PREVIEWID}
+        # payload = """<PlaceOrderRequest>
+        #                 <Order>
+        #                     <Instrument>
+        #                         <Product>
+        #                         <securityType>EQ</securityType>
+        #                         <symbol>HRL</symbol>
+        #                         </Product>
+        #                         <orderAction>{3}</orderAction>
+        #                         <quantityType>QUANTITY</quantityType>
+        #                         <quantity>100</quantity>
+        #                     </Instrument>
+        #                     <Instrument>
+        #                         <Product>
+        #                         <callPut>CALL</callPut>
+        #                         <expiryDay>12</expiryDay>
+        #                         <expiryMonth>4</expiryMonth>
+        #                         <expiryYear>2024</expiryYear>
+        #                         <securityType>OPTN</securityType>
+        #                         <strikePrice>33</strikePrice>
+        #                         <symbol>HRL</symbol>
+        #                         </Product>
+        #                         <orderAction>SELL_OPEN</orderAction>
+        #                         <orderedQuantity>1</orderedQuantity>
+        #                         <quantity>1</quantity>
+        #                     </Instrument>
+        #                     <allOrNone>FALSE</allOrNone>
+        #                     <limitPrice>{1}</limitPrice>
+        #                     <marketSession>REGULAR</marketSession>
+        #                     <orderTerm>GOOD_FOR_DAY</orderTerm>
+        #                     <priceType>NET_DEBIT</priceType>
+        #                 </Order>
+        #                 <PreviewIds>
+        #                     <previewId>{2}</previewId>
+        #                 </PreviewIds>
+        #                 <clientOrderId>{0}</clientOrderId>
+        #                 <orderType>BUY_WRITES</orderType>
+        #             </PlaceOrderRequest>"""
+
+        # payload = """<PlaceOrderRequest>
+        #                <orderType>EQ</orderType>
+        #                <clientOrderId>{0}</clientOrderId>
+        #                <Order>
+        #                    <allOrNone>false</allOrNone>
+        #                    <priceType>LIMIT</priceType>
+        #                    <orderTerm>GOOD_FOR_DAY</orderTerm>
+        #                    <marketSession>REGULAR</marketSession>
+        #                    <stopPrice></stopPrice>
+        #                    <limitPrice>{1}</limitPrice>
+        #                    <Instrument>
+        #                        <Product>
+        #                            <securityType>EQ</securityType>
+        #                            <symbol>DIS</symbol>
+        #                        </Product>
+        #                        <orderAction>{3}</orderAction>
+        #                        <quantityType>QUANTITY</quantityType>
+        #                        <quantity>1</quantity>
+        #                    </Instrument>
+        #                </Order>
+        #                <PreviewIds>
+        #                 <previewId>{2}</previewId>
+        #                </PreviewIds>
+        #            </PlaceOrderRequest>"""
+        payload = payload.format(clientId, limitprice, previewIds, orderaction)
+
         
-        payload = payload.format(clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2)#orderaction
+        #payload = payload.format(clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2)#orderaction
+        #new_payload = payload.format(clientId, previewIds)
         #payload = payload.format(clientId, limitprice, previewIds, orderaction)
         response = self.session.post(url, header_auth=True, headers=headers, data=payload)
         logger.debug("Request Header: %s", response.request.headers)
