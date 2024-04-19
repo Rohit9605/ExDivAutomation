@@ -24,6 +24,31 @@ class Stock():
     def __init__ (self, _):
         _ = self._
 
+    # def getTickers():
+    #     pd.set_option('expand_frame_repr', False)
+    #     pd.options.display.max_rows = None
+
+    #     today_obj = dt.datetime.strptime(dt.datetime.now().astimezone(timezone('America/Chicago')).strftime('%Y-%m-%d'), "%Y-%m-%d")
+    #     today_str = today_obj.strftime('%Y-%m-%d')
+
+    #     df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
+    #     df = df [['Ticker']]
+    #     #df['ex_div_date'] = ""
+    #     for ticker in df['Symbol'].to_list()[:7270]:
+    #         fundamentals = robin.robinhood.stocks.get_fundamentals(ticker)[0]
+    #         if (fundamentals != None and 'ex_dividend_date' in fundamentals.keys() and fundamentals['ex_dividend_date'] != None):
+    #             days_to_exdividend = (dt.datetime.strptime(fundamentals['ex_dividend_date'], '%Y-%m-%d') - today_obj).days + 1
+    #             #print(ticker,days_to_exdividend,fundamentals['ex_dividend_date'], today_str)
+    #             if (days_to_exdividend > 1 and days_to_exdividend <= dtd_threshold):
+    #                 df.loc[df['Symbol'] == ticker, 'ex_div_date'] = fundamentals['ex_dividend_date']
+
+
+    #     df = df[df['ex_div_date'] != '']
+    #     df = df.sort_values(by='ex_div_date', ascending=True)
+    #     #print(df)
+    #     return((df['Symbol'].to_list()))
+    #     #print(df['Symbol'].to_list())
+
     def getLowestPrice(ticker, expiration_date):
         yfin.pdr_override()
         data = pd.DataFrame()
@@ -185,7 +210,9 @@ class Stock():
 
     def getDataFrame():
         final = pd.DataFrame()
-        tickers = ['CL']#'PG', 'EOG'
+        #tickers = ['CL']#'PG', 'EOG'
+        df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
+        tickers = list(df['Ticker'].values)
         # tickers = si.tickers_dow()
         # sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
         # sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')

@@ -62,6 +62,13 @@ class Buylow:
             market = Market(self.session, self.base_url, self.account)
             # ask = market.quotes()
             # if ask <= movingaverage:
+            def renew_token():
+                url = self.base_url + "/oauth/renew_access_token"
+
+                response = self.session.get(url, header_auth=True)
+                print(response)
+                #loop.call_later(7100, renew_token)
+
             def buy():
                 clientorderId = Generator.get_random_alphanumeric_string(20)
                 account_value = market.getPortfolioCashValue()
@@ -189,23 +196,24 @@ class Buylow:
                         <clientOrderId>{0}</clientOrderId>
                         <orderType>BUY_WRITES</orderType>
                     </PreviewOrderRequest>"""            
-
-                #market.stop_loss()
+                self.renew_token()
+                market.stop_loss()
                 # orderaction1 = "BUY"
                 # orderaction2 = "SELL_OPEN"
                 data = Stock.getDataFrame()
-                # account_value = 100000
                 for i in range(len(data)):
-                    clientorderId = Generator.get_random_alphanumeric_string(20)   
-                    symbol = Stock.getSymbol(data.iloc[i])
-                    expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
-                    strikeprice = Stock.getStrikePrice(data.iloc[i])   
-                    limitprice = Stock.getLimitPrice(data.iloc[i])
-                    orderaction1 = "BUY"
-                    orderaction2 = "SELL_OPEN"    
-                    new_payload = payload.format(clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
-                    market.preview_order(new_payload, clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
-                #     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
+                    if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
+                        account_value -= 100 * Stock.getLimitPrice(data.iloc[i]) 
+                        clientorderId = Generator.get_random_alphanumeric_string(20)   
+                        symbol = Stock.getSymbol(data.iloc[i])
+                        expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
+                        strikeprice = Stock.getStrikePrice(data.iloc[i])   
+                        limitprice = Stock.getLimitPrice(data.iloc[i])
+                        orderaction1 = "BUY"
+                        orderaction2 = "SELL_OPEN"    
+                        new_payload = payload.format(clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
+                        market.preview_order(new_payload, clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
+                    #     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                 #         account_value -= 100 * Stock.getLimitPrice(data.iloc[i])
                 #         expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
                 #         print(Stock.getStrikePrice(data.iloc[i]))                   
@@ -216,7 +224,7 @@ class Buylow:
                 #         market.preview_order(payload_update, clientorderId, Stock.getSymbol(data.iloc[i]), expiry_date[2], expiry_date[1], expiry_date[0], Stock.getStrikePrice(data.iloc[i]), round((Stock.getLimitPrice(data.iloc[i])), 2), orderaction1, orderaction2)
                 # payload_new = payload.format(clientorderId)
                 # market.preview_order(payload_new, clientorderId)
-                #market.cash_in_early()
+                market.cash_in_early()
             loop.call_soon(buy)
         loop.call_later(3, createbuyorder)    
             
@@ -224,16 +232,16 @@ class Buylow:
             
 
 
-        def renew_token():
-            url = self.base_url + "/oauth/renew_access_token"
+        # def renew_token():
+        #     url = self.base_url + "/oauth/renew_access_token"
 
-            response = self.session.get(url, header_auth=True)
-            print(response)
-            loop.call_later(7100, renew_token)
+        #     response = self.session.get(url, header_auth=True)
+        #     print(response)
+        #     loop.call_later(7100, renew_token)
 
         loop.call_soon(calculatetodaysmovingaverage)
         loop.call_later(5,createbuyorder)#7200, createbuyorder)
-        loop.call_later(7100, renew_token)
+        #loop.call_later(7100, renew_token)
         loop.run_forever()
 
         #8201c4ae9815589e35c2b474c19e863d

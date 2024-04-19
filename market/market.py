@@ -367,58 +367,63 @@ class Market:
             if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
             and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
                 #looping through the positions
-                for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:
-                    print(position)
-                    marketprice = position["marketValue"]
-                    strikeprice = position["Product"]["strikePrice"]
-                    symbol = position["symbolDescription"]
-                    year = position["Product"]["expiryYear"]
-                    month = position["Product"]["expiryMonth"]
-                    day = position["Product"]["expiryDay"]
-                    limitprice = strikeprice
-
+                for i in range (len(data['Portfolio']['AccountPortfolio']['Position'])/2):
+                    #buyamt = 0
+                    sellamt = 0
+                    symbol = data['Portfolio']['AccountPortfolio']['Position'][2 * i]['symbolDescription']
+                    # buyamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['totalCost']
+                    # buyamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['totalCost']
+                    sellamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['currentCost']
+                    sellamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['currentCost']
+                    strikeprice = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['strikePrice']
+                    year = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryYear"]
+                    month = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryMonth"]
+                    day = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryDay"]
+                    limitprice = sellamt/100
                     payload = """<PreviewOrderRequest>
-                            <Order>
-                                <Instrument>
-                                    <Product>
-                                    <securityType>EQ</securityType>
-                                    <symbol>{1}</symbol>
-                                    </Product>
-                                    <orderAction>{7}</orderAction>
-                                    <quantityType>QUANTITY</quantityType>
-                                    <quantity>100</quantity>
-                                </Instrument>
-                                <Instrument>
-                                    <Product>
-                                    <callPut>CALL</callPut>
-                                    <expiryDay>{2}</expiryDay>
-                                    <expiryMonth>{3}</expiryMonth>
-                                    <expiryYear>{4}</expiryYear>
-                                    <securityType>OPTN</securityType>
-                                    <strikePrice>{5}</strikePrice>
-                                    <symbol>{1}</symbol>
-                                    </Product>
-                                    <orderAction>{8}</orderAction>
-                                    <orderedQuantity>1</orderedQuantity>
-                                    <quantity>1</quantity>
-                                </Instrument>
-                                <allOrNone>FALSE</allOrNone>
-                                <limitPrice>{6}</limitPrice>
-                                <marketSession>REGULAR</marketSession>
-                                <orderTerm>GOOD_FOR_DAY</orderTerm>
-                                <priceType>NET_DEBIT</priceType>
-                            </Order>
-                            <clientOrderId>{0}</clientOrderId>
-                            <orderType>BUY_WRITES</orderType>
-                        </PreviewOrderRequest>"""
-                    
-                orderaction1 = 'SELL'
-                orderaction2 = 'BUY_CLOSE'
-                if(marketprice <= strikeprice):
-                    clientorderId = Generator.get_random_alphanumeric_string(20)
-                    payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
-                    self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
-                    
+                                <Order>
+                                    <Instrument>
+                                        <Product>
+                                        <securityType>EQ</securityType>
+                                        <symbol>{1}</symbol>
+                                        </Product>
+                                        <orderAction>{7}</orderAction>
+                                        <quantityType>QUANTITY</quantityType>
+                                        <quantity>100</quantity>
+                                    </Instrument>
+                                    <Instrument>
+                                        <Product>
+                                        <callPut>CALL</callPut>
+                                        <expiryDay>{2}</expiryDay>
+                                        <expiryMonth>{3}</expiryMonth>
+                                        <expiryYear>{4}</expiryYear>
+                                        <securityType>OPTN</securityType>
+                                        <strikePrice>{5}</strikePrice>
+                                        <symbol>{1}</symbol>
+                                        </Product>
+                                        <orderAction>{8}</orderAction>
+                                        <orderedQuantity>1</orderedQuantity>
+                                        <quantity>1</quantity>
+                                    </Instrument>
+                                    <allOrNone>FALSE</allOrNone>
+                                    <limitPrice>{6}</limitPrice>
+                                    <marketSession>REGULAR</marketSession>
+                                    <orderTerm>GOOD_FOR_DAY</orderTerm>
+                                    <priceType>NET_DEBIT</priceType>
+                                </Order>
+                                <clientOrderId>{0}</clientOrderId>
+                                <orderType>BUY_WRITES</orderType>
+                            </PreviewOrderRequest>"""
+                        
+
+
+                    orderaction1 = 'SELL'
+                    orderaction2 = 'BUY_CLOSE'
+                    if(limitprice <= strikeprice):
+                        clientorderId = Generator.get_random_alphanumeric_string(20)
+                        payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
+                        self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
+                        
             #else:
                 # Handle errors
                 # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
@@ -463,26 +468,30 @@ class Market:
             and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
                 #looping through the positions
                 #for i in range(len(data["PortfolioResponse"]["AccountPortfolio"]["Position"])):
-                for position in data["PortfolioResponse"]["AccountPortfolio"]["Position"]:
+                date_today = dt.datetime.strptime(dt.datetime.today(), 'MM/DD/YYYY')
+                for i in range(len(data['Portfolio']['AccountPortfolio']['Position'])/2):
+                    buyamt = 0
+                    sellamt = 0
                     
-                    #used to calculate the expectedPctReturn
-                    askPrice =         position["CompleteView"]["ask"]
-                    bidPrice =         position["CompleteView"]["bid"]
-                    expiryYear =       position["Product"]["expiryYear"]
-                    expiryMonth =      position["Product"]["expiryMonth"]
-                    expiryDay =        position["Product"]["expiryDay"]
-                    markPrice = (askPrice + bidPrice)/2
-                    strikePrice =      position["Product"]["strikePrice"]
-                    symbol =           position["symbolDescription"]
-                    limitPrice = markPrice
-                    daysToExpiration = position["OptionsWatchView"]["expiryDay"]                   
-                    pricePaid =        position["pricePaid"]                   
-                    qdiv =             data["PortfolioResponse"]["AccountPortfolio"]["CompleteView"]["Dividend"]/4
+                    symbol = data['Portfolio']['AccountPortfolio']['Position'][2 * i]['symbolDescription']
+                    buyamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['totalCost']
+                    buyamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['totalCost']
+                    sellamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['currentCost']
+                    sellamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['currentCost']
+                    strikeprice = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['strikePrice']
+                    dateAcquired = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['dateAcquired']
+                    year = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryYear"]
+                    month = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryMonth"]
+                    day = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryDay"]
+                    limitprice = sellamt/100                 
+                    qdiv = data["PortfolioResponse"]["AccountPortfolio"]["CompleteView"]["Dividend"]/4
+                    expDateObj = dt.datetime.strptime(f'{year}/{month}/{day}', 'MM/DD/YYYY')
+                    dte = date_today - expDateObj
+                    daysSinceBought = date_today - dt.datetime.strptime(dateAcquired, 'MM/DD/YYYY')
+                    #used to check if buy_write position should be sold
+                    actPctChange = (100 * 365 * (buyamt - sellamt)/buyamt/dte)
+                    expPctReturn = (100 * 365 * strikeprice - buyamt + qdiv)/dte
                     
-                    #used to check if buy_write should be sold
-                    pctChange = data["PortfolioResponse"]["AccountPortfolio"]["Position"]["changePct"]
-                    expectedPctReturn = (strikePrice - pricePaid + qdiv)/(daysToExpiration) * 100 * 365
-
                     payload = """<PreviewOrderRequest>
                             <Order>
                                 <Instrument>
@@ -518,13 +527,13 @@ class Market:
                             <orderType>BUY_WRITES</orderType>
                         </PreviewOrderRequest>"""
                     
-                orderaction1 = 'SELL'
-                orderaction2 = 'BUY_CLOSE'
-                if(pctChange > expectedPctReturn):
-                    clientorderId = Generator.get_random_alphanumeric_string(20)
-                    payload = payload.format(clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2) #, ask, orderaction)
-                    self.preview_order(payload, clientorderId, symbol, expiryDay, expiryMonth, expiryYear, strikePrice, limitPrice, orderaction1, orderaction2)       
-                    
+                    orderaction1 = 'SELL'
+                    orderaction2 = 'BUY_CLOSE'
+                    if(actPctChange >= expPctReturn):
+                        clientorderId = Generator.get_random_alphanumeric_string(20)
+                        payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
+                        self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
+                        
             #else:
                 # Handle errors
                 # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
