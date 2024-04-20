@@ -23,6 +23,10 @@ handler.setFormatter(fmt)
 logger.addHandler(handler)
 
 def oauth_etrade():
+
+    
+
+    
     """Allows user authorization for the sample application with OAuth 1"""
     etrade = OAuth1Service(
         name="etrade",
@@ -32,7 +36,14 @@ def oauth_etrade():
         access_token_url="https://api.etrade.com/oauth/access_token",
         authorize_url="https://us.etrade.com/e/t/etws/authorize?key={}&token={}",
         base_url="https://api.etrade.com")
+    
+    # def renew_token():
+    #     url = "https://api.etrade.com/oauth/renew_access_token"
 
+    #     response = session.get(url, header_auth=True)
+    #     print(response)
+
+    # renew_token()
     # Step 1: Get OAuth 1 request token and secret
     request_token, request_token_secret = etrade.get_request_token(
         params={"oauth_callback": "oob", "format": "json"})

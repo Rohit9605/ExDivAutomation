@@ -196,7 +196,7 @@ class Buylow:
                         <clientOrderId>{0}</clientOrderId>
                         <orderType>BUY_WRITES</orderType>
                     </PreviewOrderRequest>"""            
-                self.renew_token()
+                renew_token()
                 market.stop_loss()
                 # orderaction1 = "BUY"
                 # orderaction2 = "SELL_OPEN"

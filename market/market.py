@@ -4,6 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from util.generator import Generator
 import datetime as dt
+import pandas as pd
 
 # logger settings
 logger = logging.getLogger('my_logger')
@@ -364,21 +365,27 @@ class Market:
             print("")
             data = response.json()
             print(data)
-            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
-            and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
+            print(data is not None)
+            print("PortfolioResponse" in data)
+            print("AccountPortfolio" in data["PortfolioResponse"])
+            print("Position" in data["PortfolioResponse"]["AccountPortfolio"][0])
+            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"] \
+                and "Position" in data["PortfolioResponse"]["AccountPortfolio"][0]):
+                print(len(data['PortfolioResponse']['AccountPortfolio'][0]['Position']))
                 #looping through the positions
-                for i in range (len(data['Portfolio']['AccountPortfolio']['Position'])/2):
+                for i in range (int(len(data['PortfolioResponse']['AccountPortfolio'][0]['Position'])/2)):
                     #buyamt = 0
                     sellamt = 0
-                    symbol = data['Portfolio']['AccountPortfolio']['Position'][2 * i]['symbolDescription']
+                    symbol = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['symbolDescription']
                     # buyamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['totalCost']
                     # buyamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['totalCost']
-                    sellamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['currentCost']
-                    sellamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['currentCost']
-                    strikeprice = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['strikePrice']
-                    year = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryYear"]
-                    month = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryMonth"]
-                    day = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryDay"]
+                    sellamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['marketValue']
+                    sellamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['marketValue']
+                    marketprice = (data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['marketValue'])/100
+                    strikeprice = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]['strikePrice']
+                    year = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryYear"]
+                    month = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryMonth"]
+                    day = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryDay"]
                     limitprice = sellamt/100
                     payload = """<PreviewOrderRequest>
                                 <Order>
@@ -419,20 +426,20 @@ class Market:
 
                     orderaction1 = 'SELL'
                     orderaction2 = 'BUY_CLOSE'
-                    if(limitprice <= strikeprice):
+                    if(marketprice <= strikeprice):
                         clientorderId = Generator.get_random_alphanumeric_string(20)
                         payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
                         self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
                         
-            #else:
-                # Handle errors
-                # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
-                #         and 'Message' in data["PortfolioResponse"]["Messages"] \
-                #         and data["PortfolioResponse"]["Messages"]["Message"] is not None:
-                #     for error_message in data["QuoteResponse"]["Messages"]["Message"]:
-                #         print("Error: " + error_message["description"])
-                # else:
-                #     print("Error: Quote API service error")
+            else:
+                #Handle errors
+                if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
+                        and 'Message' in data["PortfolioResponse"]["Messages"] \
+                        and data["PortfolioResponse"]["Messages"]["Message"] is not None:
+                    for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                        print("Error: " + error_message["description"])
+                else:
+                    print("Error: Quote API service error")
         else:
             logger.debug("Response Body: %s", response)
             print("Error: Quote API service error")
@@ -464,32 +471,34 @@ class Market:
             print("")
             data = response.json()
             print(data)
-            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"]
-            and "Position" in data["PortfolioResponse"]["AccountPortfolio"]):
+            if (data is not None and "PortfolioResponse" in data and "AccountPortfolio" in data["PortfolioResponse"] \
+            and "Position" in data["PortfolioResponse"]["AccountPortfolio"][0]):
                 #looping through the positions
                 #for i in range(len(data["PortfolioResponse"]["AccountPortfolio"]["Position"])):
-                date_today = dt.datetime.strptime(dt.datetime.today(), 'MM/DD/YYYY')
-                for i in range(len(data['Portfolio']['AccountPortfolio']['Position'])/2):
+                date_today = dt.datetime.strftime(dt.datetime.today().time, 'MM/DD/YYYY')
+                #dt.datetime.strptime(dt.datetime.strftime(dt.datetime.today().time, 'MM/DD/YYYY'), 'MM/DD/YYYY')
+                for i in range (int(len(data['PortfolioResponse']['AccountPortfolio'][0]['Position'])/2)):
                     buyamt = 0
                     sellamt = 0
                     
-                    symbol = data['Portfolio']['AccountPortfolio']['Position'][2 * i]['symbolDescription']
-                    buyamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['totalCost']
-                    buyamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['totalCost']
-                    sellamt += data['Portfolio']['AccountPortfolio']['Position'][2 * i]['currentCost']
-                    sellamt -= data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['currentCost']
-                    strikeprice = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['strikePrice']
-                    dateAcquired = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]['dateAcquired']
-                    year = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryYear"]
-                    month = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryMonth"]
-                    day = data['Portfolio']['AccountPortfolio']['Position'][2 * i + 1]["Product"]["expiryDay"]
+                    symbol = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['symbolDescription']
+                    buyamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['totalCost']
+                    buyamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['totalCost']
+                    sellamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i]['marketValue']
+                    sellamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['marketValue']
+                    strikeprice = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]['strikePrice']
+                    dateAcquired = pd.to_datetime(dt.datetime.fromtimestamp(data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['dateAcquired']))
+                    dateAcquired = dt.datetime.time(dateAcquired)           
+                    year = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryYear"]
+                    month = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryMonth"]
+                    day = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryDay"]
                     limitprice = sellamt/100                 
                     qdiv = data["PortfolioResponse"]["AccountPortfolio"]["CompleteView"]["Dividend"]/4
                     expDateObj = dt.datetime.strptime(f'{year}/{month}/{day}', 'MM/DD/YYYY')
                     dte = date_today - expDateObj
                     daysSinceBought = date_today - dt.datetime.strptime(dateAcquired, 'MM/DD/YYYY')
                     #used to check if buy_write position should be sold
-                    actPctChange = (100 * 365 * (buyamt - sellamt)/buyamt/dte)
+                    actPctChange = (100 * 365 * (buyamt - sellamt)/buyamt/daysSinceBought)
                     expPctReturn = (100 * 365 * strikeprice - buyamt + qdiv)/dte
                     
                     payload = """<PreviewOrderRequest>
@@ -534,15 +543,15 @@ class Market:
                         payload = payload.format(clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2) #, ask, orderaction)
                         self.preview_order(payload, clientorderId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2)       
                         
-            #else:
-                # Handle errors
-                # if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
-                #         and 'Message' in data["PortfolioResponse"]["Messages"] \
-                #         and data["PortfolioResponse"]["Messages"]["Message"] is not None:
-                #     for error_message in data["QuoteResponse"]["Messages"]["Message"]:
-                #         print("Error: " + error_message["description"])
-                # else:
-                #     print("Error: Quote API service error")
+            else:
+                #Handle errors
+                if data is not None and 'PortfolioResponse' in data and 'Messages' in data["QuoteResponse"] \
+                        and 'Message' in data["PortfolioResponse"]["Messages"] \
+                        and data["PortfolioResponse"]["Messages"]["Message"] is not None:
+                    for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                        print("Error: " + error_message["description"])
+                else:
+                    print("Error: Quote API service error")
         else:
             logger.debug("Response Body: %s", response)
             print("Error: Quote API service error")
