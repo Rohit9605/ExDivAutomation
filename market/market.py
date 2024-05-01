@@ -475,7 +475,7 @@ class Market:
             and "Position" in data["PortfolioResponse"]["AccountPortfolio"][0]):
                 #looping through the positions
                 #for i in range(len(data["PortfolioResponse"]["AccountPortfolio"]["Position"])):
-                date_today = dt.datetime.strftime(dt.datetime.today().time, 'MM/DD/YYYY')
+                date_today = dt.datetime.today().time().strftime('MM/DD/YYYY')
                 #dt.datetime.strptime(dt.datetime.strftime(dt.datetime.today().time, 'MM/DD/YYYY'), 'MM/DD/YYYY')
                 for i in range (int(len(data['PortfolioResponse']['AccountPortfolio'][0]['Position'])/2)):
                     buyamt = 0
@@ -488,7 +488,7 @@ class Market:
                     sellamt += data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['marketValue']
                     strikeprice = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]['strikePrice']
                     dateAcquired = pd.to_datetime(dt.datetime.fromtimestamp(data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]['dateAcquired']))
-                    dateAcquired = dt.datetime.time(dateAcquired)           
+                    dateAcquired = dateAcquired.time()           
                     year = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryYear"]
                     month = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryMonth"]
                     day = data['PortfolioResponse']['AccountPortfolio'][0]['Position'][2 * i + 1]["Product"]["expiryDay"]
@@ -499,8 +499,10 @@ class Market:
                     daysSinceBought = date_today - dt.datetime.strptime(dateAcquired, 'MM/DD/YYYY')
                     #used to check if buy_write position should be sold
                     actPctChange = (100 * 365 * (buyamt - sellamt)/buyamt/daysSinceBought)
+                    print(actPctChange)
                     expPctReturn = (100 * 365 * strikeprice - buyamt + qdiv)/dte
-                    
+                    print(expPctReturn)
+
                     payload = """<PreviewOrderRequest>
                             <Order>
                                 <Instrument>

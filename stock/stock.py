@@ -210,14 +210,14 @@ class Stock():
 
     def getDataFrame():
         final = pd.DataFrame()
-        #tickers = ['CL']#'PG', 'EOG'
-        df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
-        tickers = list(df['Ticker'].values)
+        # df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
+        # tickers = list(df['Ticker'].values)
         # tickers = si.tickers_dow()
-        # sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
-        # sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
+        #sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
+        #sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
         # tickers.extend(sp500['Symbol'].unique().tolist())   
         #tickers = (sp500['Symbol'].unique().tolist()) 
+        tickers = ['C']
         print(tickers)
         #tickers.extend(pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0])
         #print(tickers)

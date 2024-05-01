@@ -24,9 +24,6 @@ logger.addHandler(handler)
 
 def oauth_etrade():
 
-    
-
-    
     """Allows user authorization for the sample application with OAuth 1"""
     etrade = OAuth1Service(
         name="etrade",
