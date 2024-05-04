@@ -67,7 +67,73 @@ class Market:
         else:
             logger.debug("Response Body: %s", response)
             print("Error: Quote API service error")
+    
+    def getFundamentals(self, symbol):
 
+        # URL for the API endpoint
+        url = self.base_url + "/v1/market/quote/" + symbol + ".json"
+
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        response = self.session.get(url, headers=headers)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            if data is not None and "QuoteResponse" in data and "QuoteData" in data["QuoteResponse"] \
+            and "AllQuoteDetails" in data["QuoteResponse"]["QuoteData"]:
+                for quote in data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]:
+                    if quote is not None and "exDividendDate" in quote:
+                        exDividendDate = data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]["exDividendDate"]
+                        return exDividendDate
+            else:
+                # Handle errors
+                if data is not None and 'QuoteResponse' in data and 'Messages' in data["QuoteResponse"] \
+                        and 'Message' in data["QuoteResponse"]["Messages"] \
+                        and data["QuoteResponse"]["Messages"]["Message"] is not None:
+                    for error_message in data["QuoteResponse"]["Messages"]["Message"]:
+                        print("Error: " + error_message["description"])
+                else:
+                    print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+
+
+    def getCallOptionData(self, symbol):
+        # URL for the API endpoint
+        url = self.base_url + "/v1/market/optionchains?symbol=" + symbol + ".json"
+
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        response = self.session.get(url, headers=headers)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            if data is not None and "OptionChainResponse" in data and "OptionChainPair" in data["OptionChainResponse"]:
+                for optionpair in data["OptionChainResponse"]["OptionChainPair"]:
+                    if optionpair == data["OptionChainResponse"]["OptionChainPair"]["optioncall"]:
+                        return optionpair["optioncall"]
+            else:
+                # Handle errors
+                print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+    
     def getPortfolioCashValue(self):
         
         """

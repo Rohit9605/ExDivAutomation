@@ -62,13 +62,13 @@ class Buylow:
             market = Market(self.session, self.base_url, self.account)
             # ask = market.quotes()
             # if ask <= movingaverage:
-            def renew_token():
-                url = self.base_url + "/oauth/renew_access_token"
+            # def renew_token():
+            #     url = self.base_url + "/oauth/renew_access_token"
 
-                response = self.session.get(url, header_auth=True)
-                print(response)
+            #     response = self.session.get(url, header_auth=True)
+            #     print(response)
                 #loop.call_later(7100, renew_token)
-
+            print(market.getExDividendDate)
             def buy():
                 clientorderId = Generator.get_random_alphanumeric_string(20)
                 account_value = market.getPortfolioCashValue()
@@ -196,7 +196,7 @@ class Buylow:
                         <clientOrderId>{0}</clientOrderId>
                         <orderType>BUY_WRITES</orderType>
                     </PreviewOrderRequest>"""            
-                renew_token()
+                #renew_token()
                 market.stop_loss()
                 # orderaction1 = "BUY"
                 # orderaction2 = "SELL_OPEN"

@@ -17,7 +17,7 @@ import io
 from pytz import timezone
 from pandas_datareader import data as wb
 from scipy.stats import norm
-import pyetrade
+from market.market import Market
 
 class Stock():
 
@@ -121,39 +121,41 @@ class Stock():
 
         days_from_today = (today_obj + dt.timedelta(days=120)).strftime(f'%Y-%m-%d')
 
-        fundamentals = robin.robinhood.stocks.get_fundamentals(ticker)[0]
-        if (fundamentals == None or 'ex_dividend_date' not in fundamentals.keys() or fundamentals['ex_dividend_date'] == None):
-            return out
+        exDividendDate = Market.getExDividendDate(ticker)
+        # fundamentals = robin.robinhood.stocks.get_fundamentals(ticker)[0]
+        # if (fundamentals == None or 'ex_dividend_date' not in fundamentals.keys() or fundamentals['ex_dividend_date'] == None):
+        #     return out
 
-        ex_div_date = fundamentals['ex_dividend_date']
+        # ex_div_date = fundamentals['ex_dividend_date']
+
         #days_to_exdividend includes today
-        days_to_exdividend = (dt.datetime.strptime(ex_div_date, f'%Y-%m-%d') - today_obj).days
+        days_to_exdividend = (dt.datetime.strptime(exDividendDate, f'%Y-%m-%d') - today_obj).days
 
         #choose the days to exdividend
-        if (ex_div_date <= today_str or days_to_exdividend >= 7):
+        if (exDividendDate <= today_str or days_to_exdividend >= 7):
             return out
 
         #gets only option dates that are feasible
-        options_data = robin.robinhood.options.get_chains(ticker)
-        if (options_data == None):
-            return out
+        # options_data = robin.robinhood.options.get_chains(ticker)
+        # if (options_data == None):
+        #     return out
 
-        expiration_dates =  [e for e in options_data['expiration_dates'] if e <= days_from_today and e > ex_div_date and e > today_str ]
+        expiration_dates =  [e for e in Market.getExpirationDates(ticker) if e <= days_from_today and e > exDividendDate and e > today_str ]
         stock_price = pd.to_numeric(robin.robinhood.stocks.get_latest_price(ticker)[0])
         qdiv = pd.to_numeric(fundamentals['dividend_yield'])*stock_price/400
 
 
         for expiration_date in expiration_dates:
-            option_data = robin.robinhood.options.find_options_by_expiration(ticker,expiration_date,optionType='call')
+            option_data = Market.getCallOptionData()#robin.robinhood.options.find_options_by_expiration(ticker,expiration_date,optionType='call')
             df = pd.json_normalize(option_data)
-            strike_price = pd.to_numeric(df['strike_price'])
+            for data in option_data:
             #print(df.columns)
             try:
                 df = df[['symbol', 'strike_price', 'ask_price', 'bid_price', 'volume', 'open_interest']]
-                df['qdiv'] = qdiv
-                df['ex_div_date'] = ex_div_date
+                df['qdiv'] = Market.getDividend()
+                df['ex_div_date'] = exDividendDate
                 df['dtd'] = days_to_exdividend
-                df['exp_date'] = expiration_date
+                df['exp_date'] = "20" + data["osiKey"].substring(4,10)
                 df['dte'] = (dt.datetime.strptime(expiration_date, f'%Y-%m-%d') - today_obj).days
                 df['stock_price'] = pd.to_numeric(robin.robinhood.stocks.get_latest_price(ticker)[0])
                 df['strike_price'] = pd.to_numeric(df['strike_price'])
@@ -166,6 +168,13 @@ class Stock():
                 df['annual_profit_exer'] = 365 * 100 * (df['mark_price'] + df['strike_price'] - df['stock_price']) / (df['stock_price'] - df['mark_price']) / df['dtd']
                 df['lowest_price'] = Stock.getLowestPrice(ticker, expiration_date)
                 df['limit_price'] = df['stock_price'] - df['mark_price']
+                dfsymbol = call["symbol"]
+                strike_price = call["strike_price"]
+                ask_price = 
+                bid_price = 
+                volume = 
+                open_interest = 
+                qdiv
                 out = pd.concat([out,df], ignore_index=True)
             except:
                 print("Data is missing for " + ticker)
@@ -213,11 +222,11 @@ class Stock():
         # df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
         # tickers = list(df['Ticker'].values)
         # tickers = si.tickers_dow()
-        #sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
-        #sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
+        sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
+        sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
         # tickers.extend(sp500['Symbol'].unique().tolist())   
-        #tickers = (sp500['Symbol'].unique().tolist()) 
-        tickers = ['C']
+        tickers = (sp500['Symbol'].unique().tolist()) 
+        
         print(tickers)
         #tickers.extend(pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0])
         #print(tickers)
