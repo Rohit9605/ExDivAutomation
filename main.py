@@ -60,16 +60,7 @@ def oauth_etrade():
     accounts = Accounts(session, base_url)
     accounts.account_list()
 
-def oauth_robinhood():
-    KEY = '4P2T7GUU6H2YMVBT'
-    EMAIL = 'rohitgundam@gmail.com'
-    PASSWD = 'Hood123$$??'
-    totp = pyotp.TOTP(KEY).now()
-    CODE = totp
-    login = robin.robinhood.authentication.login(EMAIL,PASSWD, mfa_code=CODE)
-
 if __name__ == "__main__":
-    oauth_robinhood()
     oauth_etrade()
 
 

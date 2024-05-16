@@ -68,7 +68,7 @@ class Buylow:
             #     response = self.session.get(url, header_auth=True)
             #     print(response)
                 #loop.call_later(7100, renew_token)
-            print(market.getExDividendDate)
+            #print(market.getExDividendDate)
             def buy():
                 clientorderId = Generator.get_random_alphanumeric_string(20)
                 account_value = market.getPortfolioCashValue()
@@ -200,7 +200,8 @@ class Buylow:
                 market.stop_loss()
                 # orderaction1 = "BUY"
                 # orderaction2 = "SELL_OPEN"
-                data = Stock.getDataFrame()
+                stock = Stock(self.session, self.account, self.base_url)
+                data = stock.getDataFrame()
                 for i in range(len(data)):
                     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                         account_value -= 100 * Stock.getLimitPrice(data.iloc[i]) 

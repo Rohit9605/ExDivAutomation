@@ -88,10 +88,7 @@ class Market:
             data = response.json()
             if data is not None and "QuoteResponse" in data and "QuoteData" in data["QuoteResponse"] \
             and "AllQuoteDetails" in data["QuoteResponse"]["QuoteData"]:
-                for quote in data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]:
-                    if quote is not None and "exDividendDate" in quote:
-                        exDividendDate = data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]["exDividendDate"]
-                        return exDividendDate
+                return data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]
             else:
                 # Handle errors
                 if data is not None and 'QuoteResponse' in data and 'Messages' in data["QuoteResponse"] \
@@ -106,7 +103,7 @@ class Market:
             print("Error: Quote API service error")
 
 
-    def getCallOptionData(self, symbol):
+    def getCallData(self, symbol):
         # URL for the API endpoint
         url = self.base_url + "/v1/market/optionchains?symbol=" + symbol + ".json"
 
@@ -123,10 +120,10 @@ class Market:
             # Handle and parse response
             print("")
             data = response.json()
-            if data is not None and "OptionChainResponse" in data and "OptionChainPair" in data["OptionChainResponse"]:
-                for optionpair in data["OptionChainResponse"]["OptionChainPair"]:
-                    if optionpair == data["OptionChainResponse"]["OptionChainPair"]["optioncall"]:
-                        return optionpair["optioncall"]
+            # if data is not None and "OptionChainResponse" in data and "OptionChainPair" in data["OptionChainResponse"]:
+            #     return data["OptionChainResponse"]["OptionChainPair"]
+            if data is not None and "OptionChainResponse" in data and "optionPairs" in data["optionPairs"]:
+                return data["OptionChainResponse"]["optionPairs"]
             else:
                 # Handle errors
                 print("Error: Quote API service error")
