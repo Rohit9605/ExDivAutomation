@@ -86,9 +86,9 @@ class Market:
             # Handle and parse response
             print("")
             data = response.json()
-            if data is not None and "QuoteResponse" in data and "QuoteData" in data["QuoteResponse"] \
-            and "AllQuoteDetails" in data["QuoteResponse"]["QuoteData"]:
-                return data["QuoteResponse"]["QuoteData"]["AllQuoteDetails"]
+            if data is not None and "QuoteResponse" in data and "QuoteData" in data["QuoteResponse"]: \
+            # and "AllQuoteDetails" in data["QuoteResponse"]["QuoteData"]:
+                return data["QuoteResponse"]["QuoteData"][0]
             else:
                 # Handle errors
                 if data is not None and 'QuoteResponse' in data and 'Messages' in data["QuoteResponse"] \
@@ -102,14 +102,15 @@ class Market:
             logger.debug("Response Body: %s", response)
             print("Error: Quote API service error")
 
-
-    def getCallData(self, symbol):
-        # URL for the API endpoint
-        url = self.base_url + "/v1/market/optionchains?symbol=" + symbol + ".json"
-
+    def getExpirationDates(self, symbol):
+         # URL for the API endpoint
+        url = url = self.base_url + "/v1/market/optionexpiredate.json"
+        params = {"symbol": symbol}
         # Make API call for GET request
         headers = {"Connection": "close"}
-        response = self.session.get(url, headers=headers)
+        # params = {"symbol": symbol, "expiryYear": "2024", "expiryMonth": f'{month:02}'}
+        #         #   "chainType": "CALL"}
+        response = self.session.get(url, headers=headers, params = params)
         logger.debug("Request Header: %s", response.request.headers)
 
         if response is not None and response.status_code == 200:
@@ -122,8 +123,41 @@ class Market:
             data = response.json()
             # if data is not None and "OptionChainResponse" in data and "OptionChainPair" in data["OptionChainResponse"]:
             #     return data["OptionChainResponse"]["OptionChainPair"]
-            if data is not None and "OptionChainResponse" in data and "optionPairs" in data["optionPairs"]:
-                return data["OptionChainResponse"]["optionPairs"]
+            if data is not None and "OptionExpireDateResponse" in data \
+            and 'ExpirationDate' in data['OptionExpireDateResponse']:
+                return data["OptionExpireDateResponse"]["ExpirationDate"]
+            else:
+                # Handle errors
+                print("Error: Quote API service error")
+        else:
+            logger.debug("Response Body: %s", response)
+            print("Error: Quote API service error")
+    
+    def getCallData(self, symbol, year, month, day):
+        # URL for the API endpoint
+        #url = self.base_url + "/v1/market/optionchains?symbol=" + symbol + ".json"
+    
+        url = self.base_url + "/v1/market/optionchains.json"
+        # Make API call for GET request
+        headers = {"Connection": "close"}
+        params = {"symbol": symbol, "expiryYear": f'{year.zfill(2)}', "expiryMonth": f'{month.zfill(2)}', \
+                  "expiryDay": f'{day.zfill(2)}'}
+                #   "chainType": "CALL"}
+        response = self.session.get(url, headers=headers, params=params)
+        logger.debug("Request Header: %s", response.request.headers)
+
+        if response is not None and response.status_code == 200:
+
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+
+            # Handle and parse response
+            print("")
+            data = response.json()
+            # if data is not None and "OptionChainResponse" in data and "OptionChainPair" in data["OptionChainResponse"]:
+            #     return data["OptionChainResponse"]["OptionChainPair"]
+            if data is not None and "OptionChainResponse" in data and "OptionPair" in data["OptionChainResponse"]:
+                return data["OptionChainResponse"]["OptionPair"]
             else:
                 # Handle errors
                 print("Error: Quote API service error")

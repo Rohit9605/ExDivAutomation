@@ -1,13 +1,10 @@
-from statsmodels.regression.rolling import RollingOLS
-import pandas_datareader.data as web
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
+#from statsmodels.regression.rolling import RollingOLS
+#import matplotlib.pyplot as plt
+#import statsmodels.api as sm
 import yfinance as yfin
-import yahoo_fin.options as ops
-from yahoo_fin.stock_info import get_data
-import pyotp
-import robin_stocks as robin
-import yahoo_fin.stock_info as si
+#import yahoo_fin.options as ops
+#from yahoo_fin.stock_info import get_data
+#import yahoo_fin.stock_info as si
 import pandas as pd
 import numpy as np
 import datetime as dt
@@ -116,7 +113,7 @@ class Stock:
 
     def getOptions(self, ticker):
         market = Market(self.session, self.base_url, self.account)
-        print(market.getCallData(ticker))
+        #print(market.getCallData(ticker))
         out = pd.DataFrame()
 
         today_obj = dt.datetime.strptime(dt.datetime.now().astimezone(timezone('America/Chicago')).strftime(f'%Y-%m-%d'), f"%Y-%m-%d")
@@ -124,9 +121,11 @@ class Stock:
 
         days_from_today = (today_obj + dt.timedelta(days=120)).strftime(f'%Y-%m-%d')
 
-        exDividendDate = Market.getFundamentals(ticker)
-        
-        exDividendDate = dt.datetime.fromtimestamp(exDividendDate).strftime('%Y-%m-%d')
+        fundamentals = market.getFundamentals(ticker)
+        print(fundamentals)
+
+        exDividendDate = fundamentals['All']['exDividendDate']
+        exDividendDate = dt.datetime.fromtimestamp(exDividendDate).strftime(f'%Y-%m-%d')
         # fundamentals = robin.robinhood.stocks.get_fundamentals(ticker)[0]
         # if (fundamentals == None or 'ex_dividend_date' not in fundamentals.keys() or fundamentals['ex_dividend_date'] == None):
         #     return out
@@ -145,51 +144,69 @@ class Stock:
         # if (options_data == None):
         #     return out
 
-        call_exp_dates = Market.getCallData(ticker)["OptionDetails"]
-        expiration_dates =  [e for e in Market.getCallData(ticker) if e <= days_from_today and e > exDividendDate and e > today_str ]
-        stock_price = pd.to_numeric(robin.robinhood.stocks.get_latest_price(ticker)[0])
-        qdiv = Market.getFundamentals(ticker)["dividend"]
+        #call_exp_dates = market.getCallData(ticker)["OptionDetails"]
+        
+        # num_exp_dates = len(market.getExpirationDates(ticker))     
+        # option_data = []
+        # for i in range(num_exp_dates):
+        #     option_data += market.getCallData(ticker, market.getExpirationDates(ticker))
+        # for expiration_date in expiration_dates:
+        #     expiration_date
+        # for i in range(len(option_data)):
+        #     expiration_date = "20" + option_data[i]["Call"]['osiKey'][6:8] + "-" + \
+        #     option_data[i]["Call"]['osiKey'][8:10] + "-" + option_data[i]["Call"]['osiKey'][10:12]
+        #     expiration_dates.append(expiration_date)
+
+        expiration_dates = market.getExpirationDates(ticker)
+        print(expiration_dates)   
+        dates = []
+        for i in range(len(expiration_dates)):
+            date = f"{expiration_dates[i]['year']}-{expiration_dates[i]['month']}-{expiration_dates[i]['day']}"
+            if(dt.datetime.strptime(date, f'%Y-%m-%d') <= dt.datetime.strptime(days_from_today, f'%Y-%m-%d') \
+                and dt.datetime.strptime(date, f'%Y-%m-%d') > dt.datetime.strptime(exDividendDate, f'%Y-%m-%d') \
+                and dt.datetime.strptime(date, f'%Y-%m-%d') > dt.datetime.strptime(today_str, f'%Y-%m-%d')):
+                dates.append(expiration_dates[i])
+        qdiv = market.getFundamentals(ticker)['All']["dividend"]
 
 
-        for expiration_date in expiration_dates:
-            option_data = Market.getCallData(ticker)["OptionDetails"]
-            for i in range(len(option_data)):
-                if(option_data["optionType"] == "call"):
-                    opt_data += option_data["optionType"]
-            #robin.robinhood.options.find_options_by_expiration(ticker,expiration_date,optionType='call')
-            df = pd.json_normalize(opt_data)
-            for data in opt_data:
+
+        for expiration_date in dates:
+            data = market.getCallData(ticker, str(expiration_date['year']), str(expiration_date['month']), str(expiration_date['day']))
+            print(data)
+            df = pd.json_normalize(data)
+            print(df)
             #print(df.columns)
-                expiration_date = "20" + data["osiKey"].substring(4,10)
-                try:
-                    df = df[['symbol', 'strike_price', 'ask_price', 'bid_price', 'volume', 'open_interest']]
-                    df['qdiv'] = Market.getDividend()
-                    df['ex_div_date'] = exDividendDate
-                    df['dtd'] = days_to_exdividend
-                    df['exp_date'] = expiration_date
-                    df['dte'] = (dt.datetime.strptime(expiration_date, f'%Y-%m-%d') - today_obj).days
-                    df['stock_price'] = pd.to_numeric(robin.robinhood.stocks.get_latest_price(ticker)[0])
-                    df['strike_price'] = pd.to_numeric(df['strike_price'])
-                    df['ask_price'] = pd.to_numeric(df['ask_price'])
-                    df['bid_price'] = pd.to_numeric(df['bid_price'])
-                    df.insert(4, 'mark_price', (df['ask_price'] + df['bid_price']) / 2)
-                    #Get both qdiv and call premium if wait until expiry
-                    df['annual_profit_perc'] = 365 * 100 * (df['qdiv'] + (df['mark_price'] + df['strike_price'] - df['stock_price'])) / (df['stock_price'] - df['mark_price']) / df['dte']
-                    #Get only the call premium if exercised early
-                    df['annual_profit_exer'] = 365 * 100 * (df['mark_price'] + df['strike_price'] - df['stock_price']) / (df['stock_price'] - df['mark_price']) / df['dtd']
-                    df['lowest_price'] = Stock.getLowestPrice(ticker, expiration_date)
-                    df['limit_price'] = df['stock_price'] - df['mark_price']
-                    # dfsymbol = call["symbol"]
-                    # strike_price = call["strike_price"]
-                    # ask_price = 
-                    # bid_price = 
-                    # volume = 
-                    # open_interest = 
-                    qdiv
-                    out = pd.concat([out,df], ignore_index=True)
-                except:
-                    print("Data is missing for " + ticker)
-            #    print(out)
+            try:
+                #creating new columns
+                df['symbol'] = df['Call.optionRootSymbol']
+                df['strike_price'] = df['Call.strikePrice']
+                df['ask_price'] = df['Call.ask']
+                df['bid_price'] = df['Call.bid']
+                df['volume'] = df['Call.volume']
+                df['open_interest'] = df['Call.openInterest']
+                #removing all columns except for those above
+                df = df[['symbol', 'strike_price', 'ask_price', 'bid_price', 'volume', 'open_interest']]
+                #adding new columns
+                df['qdiv'] = qdiv
+                df['ex_div_date'] = exDividendDate
+                df['dtd'] = days_to_exdividend
+                df['exp_date'] = f"{expiration_date['year']}-{expiration_date['month']}-{expiration_date['day']}"
+                df['dte'] = (dt.datetime.strptime(expiration_date, f'%Y-%m-%d') - today_obj).days
+                df['stock_price'] = (pd.to_numeric(market.getFundamentals(ticker)['All']['ask'] + market.getFundamentals(ticker)['All']['bid']))/2
+                df['strike_price'] = pd.to_numeric(df['strike_price'])
+                df['ask_price'] = pd.to_numeric(df['ask_price'])
+                df['bid_price'] = pd.to_numeric(df['bid_price'])
+                df.insert(4, 'mark_price', (df['ask_price'] + df['bid_price']) / 2)
+                #Get both qdiv and call premium if wait until expiry
+                df['annual_profit_perc'] = 365 * 100 * (df['qdiv'] + (df['mark_price'] + df['strike_price'] - df['stock_price'])) / (df['stock_price'] - df['mark_price']) / df['dte']
+                #Get only the call premium if exercised early
+                df['annual_profit_exer'] = 365 * 100 * (df['mark_price'] + df['strike_price'] - df['stock_price']) / (df['stock_price'] - df['mark_price']) / df['dtd']
+                df['lowest_price'] = self.getLowestPrice(ticker, expiration_date)
+                df['limit_price'] = df['stock_price'] - df['mark_price']
+                out = pd.concat([out,df], ignore_index=True)
+            except:
+                print("Data is missing for " + ticker)
+            #   print(out)
 
         #Can choose annual_profit (a percent) - profit_threshold will convert that to daily_profit_threshold
         annual_profit = 5
@@ -197,7 +214,7 @@ class Stock:
 
         #Defining the thresholds
         dif_threshold = 0
-        volume_threshold = 10
+        #volume_threshold = 10
         daily_profit_threshold = annual_profit/365
         daily_profit_if_exer = annual_profit_exer/365
         open_interest_threshold = 100
@@ -233,18 +250,19 @@ class Stock:
         # df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
         # tickers = list(df['Ticker'].values)
         # tickers = si.tickers_dow()
-        tickers = "DHI"
-        # sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
+        # tickers = ['JNJ', 'UAL']
+        sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
         # sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
         # tickers.extend(sp500['Symbol'].unique().tolist())   
-        # tickers = (sp500['Symbol'].unique().tolist()) 
+        tickers = (sp500['Symbol'].unique().tolist()) 
         
         print(tickers)
         #tickers.extend(pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0])
         #print(tickers)
         #tickers.extend(getTickers(7))
         #print(tickers)
-        tickers = list(set(tickers))
+        #tickers = list(set(tickers))
+        
         tickers.sort()
 
         count = 1
