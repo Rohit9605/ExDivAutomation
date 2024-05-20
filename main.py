@@ -6,6 +6,17 @@ from rauth import OAuth1Service
 from logging.handlers import RotatingFileHandler
 from accounts.accounts import Accounts
 import pandas as pd
+import schedule
+from schedule import every, repeat
+from datetime import time, timedelta, datetime
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.action_chains import ActionChains
+from time import sleep
 
 # loading configuration file
 config = configparser.ConfigParser()
@@ -66,7 +77,68 @@ def oauth_etrade():
     accounts = Accounts(session, base_url)
     accounts.account_list()
 
+def click():
+    PATH = "C:\Program Files (x86)\chromedriver-win64\chromedriver.exe"
+    #cService = webdriver.ChromeService(executable_path=PATH)
+    #driver = webdriver.Chrome(service = cService)
+    options = webdriver.ChromeOptions()
+    options.add_experimental_option("detach", True)
+    service = Service(executable_path=PATH)
+    driver=webdriver.Chrome(service=service, options=options)
+
+    #webdriver performs all actions on webbrowser (eg Chrome)
+    #driver = webdriver.Chrome(PATH)
+    #driver.implicitly_wait(10)
+    driver.get("https://us.etrade.com/e/t/etws/authorize?key=7661fa0f2eb1f9abe3b5ffec7be0aba8&token=+h+bfhKLbdVrKXVYSwSylrPQqoBhI46a3uAacPLUxyA=")
+    
+    #sleep(30)
+    # try:
+        # link = WebDriverWait(driver, 10).until(
+        #     EC.presence_of_element_located((By.LINK_TEXT, "Accept"))
+        # )
+    
+    #Login Page
+    logon = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, "mfaLogonButton"))
+    )
+    #logon = driver.find_element(By.ID, "mfaLogonButton")
+    #link1.click()
+    element = driver.find_element(By.ID, "USER")
+    element.send_keys("rohitgundam05")
+    element = driver.find_element(By.ID, "password")
+    element.send_keys("Trade123$$??")
+    logon.click()
+
+    #Account notice Page
+    # link2 = WebDriverWait(driver, 10).until(
+    #     EC.presence_of_element_located((By.NAME, "raccontinue"))
+    # )
+    # link2.click()
+    # link2 = WebDriverWait(driver, 10).until(
+    #      continue_button = driver.find_element(By.ID, "continue-button")
+    # )
+    # element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "continue-button")))
+    # element.click()
+    # actions = ActionChains(driver)
+    # actions.click(continue_button)
+    # actions.perform()
+
+
+    # except:
+    #     driver.quit()
+    #gets title of webpage
+    #driver.title()
+    #closes tab
+    #driver.close()
+    #closes browser
+    #driver.quit()
+
+#schedule.every().day.at("11:12").do(oauth_etrade)
 if __name__ == "__main__":
+    click()
     oauth_etrade()
+    # while True:
+    #     schedule.run_pending()
+    
 
 
