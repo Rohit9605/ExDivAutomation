@@ -17,6 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
+import pickle
 
 # loading configuration file
 config = configparser.ConfigParser()
@@ -78,25 +79,18 @@ def oauth_etrade():
     accounts.account_list()
 
 def click():
-    PATH = "C:\Program Files (x86)\chromedriver-win64\chromedriver.exe"
+    PATH = "C:\Program Files (x86)\edgedriver_win64\msedgedriver.exe"
+    
     #cService = webdriver.ChromeService(executable_path=PATH)
     #driver = webdriver.Chrome(service = cService)
-    options = webdriver.ChromeOptions()
+    options = webdriver.EdgeOptions()
     options.add_experimental_option("detach", True)
+    #options.add_argument("--user-agent=" + "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
     service = Service(executable_path=PATH)
-    driver=webdriver.Chrome(service=service, options=options)
 
-    #webdriver performs all actions on webbrowser (eg Chrome)
-    #driver = webdriver.Chrome(PATH)
-    #driver.implicitly_wait(10)
+    #swhcookie={'name':'SWH','value':'ETWLCUST1-be5fbc48-91fb','domain':'.etrade.com','secure':True,'httpOnly':True}
+    driver=webdriver.Edge(service=service, options=options)
     driver.get("https://us.etrade.com/e/t/etws/authorize?key=7661fa0f2eb1f9abe3b5ffec7be0aba8&token=+h+bfhKLbdVrKXVYSwSylrPQqoBhI46a3uAacPLUxyA=")
-    
-    #sleep(30)
-    # try:
-        # link = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.LINK_TEXT, "Accept"))
-        # )
-    
     #Login Page
     logon = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.ID, "mfaLogonButton"))
@@ -108,6 +102,20 @@ def click():
     element = driver.find_element(By.ID, "password")
     element.send_keys("Trade123$$??")
     logon.click()
+    #driver.add_cookie(swhcookie)
+
+    #webdriver performs all actions on webbrowser (eg Chrome)
+    #driver = webdriver.Chrome(PATH)
+    #driver.implicitly_wait(10)
+    #driver.get("https://us.etrade.com/e/t/etws/authorize?key=7661fa0f2eb1f9abe3b5ffec7be0aba8&token=+h+bfhKLbdVrKXVYSwSylrPQqoBhI46a3uAacPLUxyA=")
+    
+    #sleep(30)
+    # try:
+        # link = WebDriverWait(driver, 10).until(
+        #     EC.presence_of_element_located((By.LINK_TEXT, "Accept"))
+        # )
+    
+    
 
     #Account notice Page
     # link2 = WebDriverWait(driver, 10).until(
@@ -135,7 +143,7 @@ def click():
 
 #schedule.every().day.at("11:12").do(oauth_etrade)
 if __name__ == "__main__":
-    click()
+    #click()
     oauth_etrade()
     # while True:
     #     schedule.run_pending()

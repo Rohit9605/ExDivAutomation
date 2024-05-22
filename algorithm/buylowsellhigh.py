@@ -4,7 +4,7 @@ from market.market import Market
 from util.generator import Generator
 from stock.stock import Stock
 import pandas as pd
-import time 
+from time import sleep
 
 asklist = []
 openasklist = open("asklist.pickle", "wb")
@@ -197,11 +197,10 @@ class Buylow:
                         <orderType>BUY_WRITES</orderType>
                     </PreviewOrderRequest>"""            
                 #renew_token()
-                market.stop_loss()
-                # orderaction1 = "BUY"
-                # orderaction2 = "SELL_OPEN"
+                #market.stop_loss()
                 stock = Stock(self.session, self.account, self.base_url)
                 data = stock.getDataFrame()
+                #responses = []
                 for i in range(len(data)):
                     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
                         account_value -= 100 * Stock.getLimitPrice(data.iloc[i]) 
@@ -214,18 +213,10 @@ class Buylow:
                         orderaction2 = "SELL_OPEN"    
                         new_payload = payload.format(clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
                         market.preview_order(new_payload, clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
-                    #     if (account_value >= (100 * Stock.getLimitPrice(data.iloc[i]))):
-                #         account_value -= 100 * Stock.getLimitPrice(data.iloc[i])
-                #         expiry_date = Stock.getExpiryDate(data.iloc[i]).split("-")
-                #         print(Stock.getStrikePrice(data.iloc[i]))                   
-                #         payload_update = payload.format(clientorderId, Stock.getSymbol(data.iloc[i]), expiry_date[2], expiry_date[1], expiry_date[0], Stock.getStrikePrice(data.iloc[i]), round((Stock.getLimitPrice(data.iloc[i])), 2), orderaction1, orderaction2) #, ask, orderaction)
-                #         print(payload_update)
-                        
-                #         #time.sleep(60)
-                #         market.preview_order(payload_update, clientorderId, Stock.getSymbol(data.iloc[i]), expiry_date[2], expiry_date[1], expiry_date[0], Stock.getStrikePrice(data.iloc[i]), round((Stock.getLimitPrice(data.iloc[i])), 2), orderaction1, orderaction2)
-                # payload_new = payload.format(clientorderId)
-                # market.preview_order(payload_new, clientorderId)
-                market.cash_in_early()
+                        #while account_value 
+                            #sleep(10) 
+                        #market.preview_change_order(new_payload, clientorderId, symbol, expiry_date[2], expiry_date[1], expiry_date[0], strikeprice, round(limitprice, 2), orderaction1, orderaction2)
+                #market.cash_in_early()
             loop.call_soon(buy)
         loop.call_later(3, createbuyorder)    
             

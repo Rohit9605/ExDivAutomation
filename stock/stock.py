@@ -211,16 +211,17 @@ class Stock:
             #   print(out)
 
         #Can choose annual_profit (a percent) - profit_threshold will convert that to daily_profit_threshold
-        annual_profit = 2
-        annual_profit_exer = 2
+        annual_profit = 10
+        annual_profit_exer = 10
 
         #Defining the thresholds
         dif_threshold = 0
-        #volume_threshold = 10
+        volume_threshold = 0
         daily_profit_threshold = annual_profit/365
         daily_profit_if_exer = annual_profit_exer/365
-        open_interest_threshold = 100
+        open_interest_threshold = 1000
         qdiv_threshold = 0.1
+        bid_ask_spread_threshold = 0.025
 
         #Returning the rows that meets the criteria
         if not out.empty:
@@ -230,9 +231,10 @@ class Stock:
         # else:
         #     return out
             #If stock is liquid enough
-            #out = out[out['volume'] >= volume_threshold]
-            out = out[out['open_interest'] >= open_interest_threshold]
-
+            out = out[out['volume'] > volume_threshold]
+            out = out[out['open_interest'] > open_interest_threshold]
+            out = out[(out['ask_price'] - out['bid_price']) / out['mark_price'] < bid_ask_spread_threshold]
+                      
             #If the sell call has extrinsic value greater than or equal to a percentage of the quarterly dividend
             out = out[(out['ask_price'] + out['bid_price']) / 2 + out['strike_price'] - out['stock_price'] >=  qdiv_threshold * out['qdiv']]
 
@@ -242,6 +244,7 @@ class Stock:
             #If daily profit percent based on exercise will be enough
             out = out[100 * (out['mark_price'] + out['strike_price'] - out['stock_price']) / (out['stock_price'] - out['mark_price']) / out['dtd'] >= daily_profit_if_exer]
 
+            
             #If the strike price is lower than the MC simulation's lowest predicted price
             #This is the last check since it is the most computationally expensive
             out = out[out['strike_price'] < out['lowest_price']]
@@ -252,11 +255,11 @@ class Stock:
         # df = pd.read_csv(os.path.abspath("dividend_kings.csv"))
         # tickers = list(df['Ticker'].values)
         # tickers = si.tickers_dow()
-        #tickers = ['EFX', 'CAKE', 'JNJ']
+        tickers = []
         sp500 = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
         # sp500['Symbol'] = sp500['Symbol'].str.replace('.', '-')
-        # tickers.extend(sp500['Symbol'].unique().tolist())   
-        tickers = (sp500['Symbol'].unique().tolist()) 
+        tickers.extend(sp500['Symbol'].unique().tolist())   
+        #tickers = (sp500['Symbol'].unique().tolist()) 
         
         print(tickers)
         #tickers.extend(pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0])
@@ -281,7 +284,7 @@ class Stock:
                 print(ticker + ' is giving an error.')
 
         print(final)
-        return final.iloc[:3]
+        return final.iloc[:5]
 
     def getSymbol(df):
         return df['symbol']

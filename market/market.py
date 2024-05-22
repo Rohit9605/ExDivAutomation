@@ -312,84 +312,6 @@ class Market:
         # Add parameters and header information
         headers = {"Content-Type": "application/xml", "consumerKey": config["DEFAULT"]["CONSUMER_KEY"]}
 
-        # Add payload for POST Request
-        # Add payload for POST Request
-        # payload = """<PreviewOrderRequest>
-        #                         <Order>
-        #                             <Instrument>
-        #                                 <Product>
-        #                                 <securityType>EQ</securityType>
-        #                                 <symbol>DIS</symbol>
-        #                                 </Product>
-        #                                 <orderAction>BUY</orderAction>
-        #                                 <quantityType>QUANTITY</quantityType>
-        #                                 <quantity>100</quantity>
-        #                             </Instrument>
-        #                             <Instrument>
-        #                                 <Product>
-        #                                 <callPut>CALL</callPut>
-        #                                 <expiryDay>19</expiryDay>
-        #                                 <expiryMonth>04</expiryMonth>
-        #                                 <expiryYear>2024</expiryYear>
-        #                                 <securityType>OPTN</securityType>
-        #                                 <strikePrice>95</strikePrice>
-        #                                 <symbol>DIS</symbol>
-        #                                 </Product>
-        #                                 <orderAction>SELL_OPEN</orderAction>
-        #                                 <orderedQuantity>1</orderedQuantity>
-        #                                 <quantity>1</quantity>
-        #                             </Instrument>
-        #                             <allOrNone>FALSE</allOrNone>
-        #                             <limitPrice>35/limitPrice>
-        #                             <marketSession>REGULAR</marketSession>
-        #                             <orderTerm>GOOD_FOR_DAY</orderTerm>
-        #                             <priceType>NET_DEBIT</priceType>
-        #                         </Order>
-        #                         <PreviewIds>
-        #                             <previewId>{1}</previewId>
-        #                         </PreviewIds>                             
-        #                         <clientOrderId>{0}</clientOrderId>
-        #                         <orderType>BUY_WRITES</orderType>
-        #                     </PreviewOrderRequest>"""
-#{PREVIEWID}
-        # payload = """<PlaceOrderRequest>
-        #                 <Order>
-        #                     <Instrument>
-        #                         <Product>
-        #                         <securityType>EQ</securityType>
-        #                         <symbol>UAL</symbol>
-        #                         </Product>
-        #                         <orderAction>{3}</orderAction>
-        #                         <quantityType>QUANTITY</quantityType>
-        #                         <quantity>100</quantity>
-        #                     </Instrument>
-        #                     <Instrument>
-        #                         <Product>
-        #                         <callPut>CALL</callPut>
-        #                         <expiryDay>19</expiryDay>
-        #                         <expiryMonth>04</expiryMonth>
-        #                         <expiryYear>2024</expiryYear>
-        #                         <securityType>OPTN</securityType>
-        #                         <strikePrice>39</strikePrice>
-        #                         <symbol>UAL</symbol>
-        #                         </Product>
-        #                         <orderAction>SELL_OPEN</orderAction>
-        #                         <orderedQuantity>1</orderedQuantity>
-        #                         <quantity>1</quantity>
-        #                     </Instrument>
-        #                     <allOrNone>FALSE</allOrNone>
-        #                     <limitPrice>{2}</limitPrice>
-        #                     <marketSession>REGULAR</marketSession>
-        #                     <orderTerm>GOOD_FOR_DAY</orderTerm>
-        #                     <priceType>NET_DEBIT</priceType>
-        #                 </Order>
-        #                 <PreviewIds>
-        #                     <previewId>{1}</previewId>
-        #                 </PreviewIds>
-        #                 <clientOrderId>{0}</clientOrderId>
-        #                 <orderType>BUY_WRITES</orderType>
-        #             </PlaceOrderRequest>"""
-
         payload = """<PlaceOrderRequest>
                         <Order>
                             <Instrument>
@@ -438,6 +360,160 @@ class Market:
         logger.debug("Request payload: %s", payload)
         print(payload)
         print(response)
+        
+        if response is not None and response.status_code == 200:
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+            #return response
+        else:
+            # Handle errors
+            data = response.json()
+            if 'Error' in data and 'message' in data["Error"] and data["Error"]["message"] is not None:
+                print("Error: " + data["Error"]["message"])
+            else:
+                print("Error: Place Order API service error")
+
+    def preview_change_order(self, req, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2):
+        
+        """
+        Call preview change order API based on selecting from different given options
+
+        :param self: Pass in authenticated session and information on selected account
+        """
+
+        # URL for the API endpoint
+        url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/orders/preview.json"
+
+        # Add parameters and header information
+        headers = {"Content-Type": "application/xml", "consumerKey": config["DEFAULT"]["CONSUMER_KEY"]}
+        # Make API call for POST request
+        response = self.session.post(url, header_auth=True, headers=headers, data=req)
+        logger.debug("Request Header: %s", response.request.headers)
+        logger.debug("Request payload: %s", req)
+
+        # Handle and parse response
+        if response is not None and response.status_code == 200:
+            parsed = json.loads(response.text)
+            logger.debug("Response Body: %s", json.dumps(parsed, indent=4, sort_keys=True))
+            data = response.json()
+            print("\nPreview Order:")
+
+            if data is not None and "PreviewOrderResponse" in data and "PreviewIds" in data["PreviewOrderResponse"]:
+                for previewids in data["PreviewOrderResponse"]["PreviewIds"]:
+                    print(previewids["previewId"])
+                    #self.place_order(clientId, symbol, day, month, year, strikeprice, previewids["previewId"], limitprice, orderaction1, orderaction2)
+                    self.place_change_order(clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewids["previewId"])
+                    #, limitprice, orderaction
+            else:
+                # Handle errors
+                data = response.json()
+                if 'Error' in data and 'message' in data["Error"] and data["Error"]["message"] is not None:
+                    print("Error: " + data["Error"]["message"])
+                else:
+                    print("Error: Preview Order API service error")
+
+            if data is not None and "PreviewOrderResponse" in data and "Order" in data["PreviewOrderResponse"]:
+                for orders in data["PreviewOrderResponse"]["Order"]:
+
+                    if orders is not None and "Instrument" in orders:
+                        for instrument in orders["Instrument"]:
+                            if instrument is not None and "orderAction" in instrument:
+                                print("Action: " + instrument["orderAction"])
+                            if instrument is not None and "quantity" in instrument:
+                                print("Quantity: " + str(instrument["quantity"]))
+                            if instrument is not None and "Product" in instrument \
+                                    and "symbol" in instrument["Product"]:
+                                print("Symbol: " + instrument["Product"]["symbol"])
+                            if instrument is not None and "symbolDescription" in instrument:
+                                print("Description: " + str(instrument["symbolDescription"]))
+
+                if orders is not None and "priceType" in orders and "limitPrice" in orders:
+                    print("Price Type: " + orders["priceType"])
+                    if orders["priceType"] == "MARKET":
+                        print("Price: MKT")
+                    else:
+                        print("Price: " + str(orders["limitPrice"]))
+                if orders is not None and "orderTerm" in orders:
+                    print("Duration: " + orders["orderTerm"])
+                if orders is not None and "estimatedCommission" in orders:
+                    print("Estimated Commission: " + str(orders["estimatedCommission"]))
+                if orders is not None and "estimatedTotalAmount" in orders:
+                    print("Estimated Total Cost: " + str(orders["estimatedTotalAmount"]))
+            else:
+                # Handle errors
+                data = response.json()
+                if 'Error' in data and 'message' in data["Error"] and data["Error"]["message"] is not None:
+                    print("Error: " + data["Error"]["message"])
+                else:
+                    print("Error: Preview Order API service error")
+        else:
+            # Handle errors
+            data = response.json()
+            if 'Error' in data and 'message' in data["Error"] and data["Error"]["message"] is not None:
+                print("Error: " + data["Error"]["message"])
+            else:
+                print("Error: Preview Order API service error")
+
+    def place_change_order(self, clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewIds):
+        
+        #place new order w/ limit price closer to strike price
+        
+        url = self.base_url + "/v1/accounts/" + self.account["accountIdKey"] + "/orders/" + clientId + "change/place.json"
+
+        # Add parameters and header information
+        headers = {"Content-Type": "application/xml", "consumerKey": config["DEFAULT"]["CONSUMER_KEY"]}
+
+        payload = """<PlaceOrderRequest>
+                        <Order>
+                            <Instrument>
+                                <Product>
+                                <securityType>EQ</securityType>
+                                <symbol>{1}</symbol>
+                                </Product>
+                                <orderAction>{7}</orderAction>
+                                <quantityType>QUANTITY</quantityType>
+                                <quantity>100</quantity>
+                            </Instrument>
+                            <Instrument>
+                                <Product>
+                                <callPut>CALL</callPut>
+                                <expiryDay>{2}</expiryDay>
+                                <expiryMonth>{3}</expiryMonth>
+                                <expiryYear>{4}</expiryYear>
+                                <securityType>OPTN</securityType>
+                                <strikePrice>{5}</strikePrice>
+                                <symbol>{1}</symbol>
+                                </Product>
+                                <orderAction>{8}</orderAction>
+                                <orderedQuantity>1</orderedQuantity>
+                                <quantity>1</quantity>
+                            </Instrument>
+                            <allOrNone>FALSE</allOrNone>
+                            <limitPrice>{6}</limitPrice>
+                            <marketSession>REGULAR</marketSession>
+                            <orderTerm>GOOD_FOR_DAY</orderTerm>
+                            <priceType>NET_DEBIT</priceType>
+                        </Order>
+                        <PreviewIds>
+                            <previewId>{9}</previewId>
+                        </PreviewIds>
+                        <clientOrderId>{0}</clientOrderId>
+                        <orderType>BUY_WRITES</orderType>
+                    </PlaceOrderRequest>"""
+        
+        limitprice += limitprice * .001
+        if(limitprice < strikeprice):
+            payload = payload.format(clientId, symbol, day, month, year, strikeprice, limitprice, orderaction1, orderaction2, previewIds)
+
+        
+        #payload = payload.format(clientId, symbol, day, month, year, strikeprice, previewIds, limitprice, orderaction1, orderaction2)#orderaction
+        #new_payload = payload.format(clientId, previewIds)
+        #payload = payload.format(clientId, limitprice, previewIds, orderaction)
+        response = self.session.post(url, header_auth=True, headers=headers, data=payload)
+        logger.debug("Request Header: %s", response.request.headers)
+        logger.debug("Request payload: %s", payload)
+        print(payload)
+        print(response)
 
         if response is not None and response.status_code == 200:
             parsed = json.loads(response.text)
@@ -449,7 +525,7 @@ class Market:
                 print("Error: " + data["Error"]["message"])
             else:
                 print("Error: Place Order API service error")
-    
+
     def stop_loss(self):
         """
         Calls quotes API to provide quote details for equities, options, and mutual funds
